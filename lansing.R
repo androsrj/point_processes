@@ -4,6 +4,7 @@ source("priors.R")
 source("likelihood.R")
 source("langevin.R")
 library(mvtnorm)
+library(ggplot2)
 library(spatstat)
 str(lansing)
 summary(lansing$x)
@@ -11,6 +12,7 @@ summary(lansing$y)
 
 N <- lansing$n
 n <- 100
+set.seed(123)
 subset <- sample(1:N, n)
 x <- cbind(x1 = lansing$x[subset], x2 = lansing$y[subset])
 K <- 10
@@ -34,8 +36,11 @@ p <- rep(1/K, K)
 v <- log(p / (1 - p))
 
 starting <- list(v = v, mu = mu, theta = theta, mu1 = mu1, mu2 = mu2, alpha = alpha, beta = beta)
-step_sizes <- c(5e-4, 1e-4, 3e-6, 1e-6, 5e-16, 1e-8, 5e-8)
-model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 50, nBurn = 10, nThin = 2)
+starting <- list(v = v, mu = rnorm(K), theta = log(rgamma(K, 1, 2)), 
+                 mu1 = rnorm(K), mu2 = rnorm(K), 
+                 alpha = log(rgamma(K, 1, 2)), beta = log(rgamma(K, 1, 2)))
+step_sizes <- c(1e-3, 1e-4, 3e-6, 1e-16, 1e-16, 5e-8, 1e-7)
+model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 100, nBurn = 10, nThin = 2)
 
 f_true <- sapply(1:n, function(i) {
   sum(sapply(1:K, function(j) {
@@ -58,7 +63,7 @@ f_est <- sapply(1:n, function(i) {
 
 df_true <- data.frame(x=x[,1], y=x[,2], f=f_true)
 df_est <- data.frame(x=x[,1], y=x[,2], f=f_est)
-lims <- c(0, 52)
+lims <- c(0, max(f_est))
 
 ggplot(data=df_true, aes(x, y, height=0.05, width=0.05)) +
   geom_tile(aes(fill = f)) +
@@ -71,11 +76,22 @@ ggplot(data=df_est, aes(x, y, height=0.05, width=0.05)) +
   theme_classic()
 
 library(interp)
-df_true <- interp(x[,1], x[,2], f_true, nx = 500, ny = 500) |> 
+df_true <- interp(x[,1], x[,2], f_true, nx = 50, ny = 50) |> 
   interp2xyz() |> 
   as.data.frame()
 ggplot(data = df_true, aes(x, y)) +
   geom_raster(aes(fill = z)) +
-  scale_fill_distiller(palette = "Spectral", na.value = NA) + 
+  scale_fill_distiller(palette = "Spectral", na.value = NA, limits = lims) + 
   theme_classic() +
-  ggtitle("Linear interpolation")
+  ggtitle("True f")
+ggsave(filename = "figures/surf_truth.pdf", height = 5)
+
+df_est <- interp(x[,1], x[,2], f_est, nx = 50, ny = 50) |> 
+  interp2xyz() |> 
+  as.data.frame()
+ggplot(data = df_est, aes(x, y)) +
+  geom_raster(aes(fill = z)) +
+  scale_fill_distiller(palette = "Spectral", na.value = NA, limits = lims) + 
+  theme_classic() +
+  ggtitle("Estimated f")
+ggsave(filename = "figures/surf_est.pdf", height = 5)
