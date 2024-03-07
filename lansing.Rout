@@ -17,6 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > source("kernels.R")
 > source("gradients.R")
 > source("priors.R")
@@ -92,10 +94,11 @@ List of 6
 > p <- rep(1/K, K)
 > v <- log(p / (1 - p))
 > 
-> starting <- list(v = v, mu = mu, theta = theta, mu1 = mu1, mu2 = mu2, alpha = alpha, beta = beta)
-> starting <- list(v = v, mu = rnorm(K), theta = log(rgamma(K, 1, 2)), 
-+                  mu1 = rnorm(K), mu2 = rnorm(K), 
-+                  alpha = log(rgamma(K, 1, 2)), beta = log(rgamma(K, 1, 2)))
+> #starting <- list(v = v, mu = mu, theta = theta, mu1 = mu1, mu2 = mu2, alpha = alpha, beta = beta)
+> starting <- list(v = v, mu = mu + rnorm(K, 0, 0.1), 
++ 		 theta = theta + rnorm(K, 0, 0.1), 
++                  mu1 = mu1 + rnorm(K, 0, 0.1), mu2 = mu2 + rnorm(K, 0, 0.1), 
++                  alpha = alpha + rnorm(K, 0, 0.1), beta = beta + rnorm(K, 0, 0.1))
 > step_sizes <- c(1e-3, 1e-4, 3e-6, 1e-16, 1e-16, 5e-8, 1e-7)
 > model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 100, nBurn = 10, nThin = 2)
 Beginning iteration 2.
@@ -279,6 +282,19 @@ Saving 7 x 5 in image
 Warning message:
 Removed 341 rows containing missing values (`geom_raster()`). 
 > 
+> model$acceptance
+              v        mu     theta mu1 mu2     alpha beta
+ [1,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+ [2,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+ [3,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+ [4,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+ [5,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+ [6,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+ [7,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+ [8,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+ [9,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+[10,] 0.4727273 0.7090909 0.5181818 0.7   0 0.4909091  0.7
+> 
 > proc.time()
     user   system  elapsed 
-2246.723   11.804 2259.716 
+2287.431   12.190 2300.211 
