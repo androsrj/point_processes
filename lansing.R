@@ -98,3 +98,10 @@ ggplot(data = df_est, aes(x, y)) +
 ggsave(filename = "figures/surf_est.pdf", height = 5)
 
 model$acceptance
+starting
+mu[1]
+sig.sq[1]
+mu1[1]
+mu2[1]
+tau.sq1[1]
+tau.sq2[1]
