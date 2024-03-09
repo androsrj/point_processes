@@ -150,13 +150,14 @@ langevin_pp <- function(x, t, N, K,
   tau.sq2 <- exp(beta)
   
   # Trace plots
-  #pdf(paste0("../paper/figures/trace_plots/trace_plots_", model, ".pdf"))
-  #plot(1:nSamples, sigma2, type = 'l', ylab = "Sigma2", main = "")
-  #plot(1:nSamples, tau2, type = 'l', ylab = "Tau2", main = "")
-  ##plot(1:nSamples, theta, type = 'l', ylab = "Trace Plot for theta")
-  #plot(1:nSamples, beta[1, ], type = 'l', ylab = "Beta_1", main = "")
-  #plot(1:nSamples, beta[p, ], type = 'l', ylab = "Beta_p", main = "")
-  #dev.off()  
+  pdf("figures/trace_plots.pdf")
+  plot(1:nSamples, sigma.sq[,1], type = 'l', ylab = "Sigma2", main = "")
+  plot(1:nSamples, mu[,1], type = 'l', ylab = "Mu", main = "")
+  plot(1:nSamples, mu1[,1], type = 'l', ylab = "Mu1")
+  plot(1:nSamples, mu2[,1], type = 'l', ylab = "Mu2", main = "")
+  plot(1:nSamples, tau.sq1[,1], type = 'l', ylab = "Tau2", main = "")
+  plot(1:nSamples, tau.sq2[,1], type = 'l', ylab = "Tau2", main = "")
+  dev.off()  
   
   # Posterior mean estimates (can be somewhat skewed because of back-transformations)
   posteriorMeans <- list(pi = apply(pi, 2, mean),

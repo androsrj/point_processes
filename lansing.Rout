@@ -297,4 +297,4 @@ Removed 341 rows containing missing values (`geom_raster()`).
 > 
 > proc.time()
     user   system  elapsed 
-2287.431   12.190 2300.211 
+2256.740   11.689 2269.362 
