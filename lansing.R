@@ -36,12 +36,12 @@ p <- rep(1/K, K)
 v <- log(p / (1 - p))
 
 #starting <- list(v = v, mu = mu, theta = theta, mu1 = mu1, mu2 = mu2, alpha = alpha, beta = beta)
-starting <- list(v = v, mu = mu + rnorm(K, 0, 0.1), 
-		 theta = theta + rnorm(K, 0, 0.1), 
-                 mu1 = mu1 + rnorm(K, 0, 0.1), mu2 = mu2 + rnorm(K, 0, 0.1), 
-                 alpha = alpha + rnorm(K, 0, 0.1), beta = beta + rnorm(K, 0, 0.1))
+starting <- list(v = v, mu = mu + rnorm(K, 0, 0.25), 
+		 theta = theta + rnorm(K, 0, 0.25), 
+                 mu1 = mu1 + rnorm(K, 0, 0.25), mu2 = mu2 + rnorm(K, 0, 0.25), 
+                 alpha = alpha + rnorm(K, 0, 0.25), beta = beta + rnorm(K, 0, 0.25))
 step_sizes <- c(1e-3, 1e-4, 3e-6, 1e-16, 1e-16, 5e-8, 1e-7)
-model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 100, nBurn = 10, nThin = 2)
+model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 1000, nBurn = 10, nThin = 2)
 
 f_true <- sapply(1:n, function(i) {
   sum(sapply(1:K, function(j) {
