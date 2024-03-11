@@ -40,7 +40,7 @@ starting <- list(v = v, mu = mu + rnorm(K, 0, 0.25),
 		 theta = theta + rnorm(K, 0, 0.25), 
                  mu1 = mu1 + rnorm(K, 0, 0.25), mu2 = mu2 + rnorm(K, 0, 0.25), 
                  alpha = alpha + rnorm(K, 0, 0.25), beta = beta + rnorm(K, 0, 0.25))
-step_sizes <- c(1e-3, 1e-4, 1e-4, 1e-4, 1e-4, 1e-4, 1e-4)
+step_sizes <- c(1e-3, 1e-4, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6)
 model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 1000, nBurn = 10, nThin = 2)
 
 f_true <- sapply(1:n, function(i) {
