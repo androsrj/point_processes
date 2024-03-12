@@ -76,6 +76,7 @@ wass_tau.sq2 <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$
 #model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 1000, nBurn = 10, nThin = 2)
 
 x <- cbind(x1 = lansing$x[unlist(subsets)], x2 = lansing$y[unlist(subsets)])
+t <- rep(0.5, nrow(x))
 
 f_true <- sapply(1:nrow(x), function(i) {
   sum(sapply(1:K, function(j) {
