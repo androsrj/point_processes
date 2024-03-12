@@ -16,7 +16,7 @@ index_rm <- lansing$x != 1 & lansing$y != 0
 lansing$x <- lansing$x[index_rm]
 lansing$y <- lansing$y[index_rm]
 mySeed <- 123
-nCores <- 4
+nCores <- 20
 N <- lansing$n - 4
 n <- 100
 
@@ -77,7 +77,7 @@ wass_tau.sq2 <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$
 
 x <- cbind(x1 = lansing$x[unlist(subsets)], x2 = lansing$y[unlist(subsets)])
 
-f_true <- sapply(1:n, function(i) {
+f_true <- sapply(1:nrow(x), function(i) {
   sum(sapply(1:K, function(j) {
     k(t[i], x[i,1], x[i,2],
       mu[j], log(sig.sq[j]),
@@ -86,7 +86,7 @@ f_true <- sapply(1:n, function(i) {
   }))
 })
 
-f_est <- sapply(1:n, function(i) {
+f_est <- sapply(1:nrow(x), function(i) {
   sum(sapply(1:K, function(j) {
     k(t[i], x[i,1], x[i,2],
       wass_mu[j], log(wass_sigma.sq[j]),
@@ -111,6 +111,8 @@ ggplot(data=df_est, aes(x, y, height=0.05, width=0.05)) +
   geom_tile(aes(fill = f)) +
   scale_fill_distiller(palette = "Spectral", na.value = NA, limits = lims) +
   theme_classic()
+
+f_true
 
 library(interp)
 df_true <- interp(x[,1], x[,2], f_true, nx = 50, ny = 50) |> 

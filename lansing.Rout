@@ -19,11 +19,13 @@ Type 'q()' to quit R.
 
 [Previously saved workspace restored]
 
-> source("kernels.R")
-> source("gradients.R")
-> source("priors.R")
-> source("likelihood.R")
-> source("langevin.R")
+> source("functions/kernels.R")
+> source("functions/gradients.R")
+> source("functions/priors.R")
+> source("functions/likelihood.R")
+> source("functions/langevin.R")
+> source("functions/parallel.R")
+> 
 > library(mvtnorm)
 > library(ggplot2)
 > library(spatstat)
@@ -44,36 +46,27 @@ spatstat.linnet 3.1-4
 spatstat 3.0-7 
 For an introduction to spatstat, type ‘beginner’ 
 
-> str(lansing)
-List of 6
- $ window    :List of 4
-  ..$ type  : chr "rectangle"
-  ..$ xrange: num [1:2] 0 1
-  ..$ yrange: num [1:2] 0 1
-  ..$ units :List of 3
-  .. ..$ singular  : chr "foot"
-  .. ..$ plural    : chr "feet"
-  .. ..$ multiplier: num 924
-  .. ..- attr(*, "class")= chr "unitname"
-  ..- attr(*, "class")= chr "owin"
- $ n         : int 2251
- $ x         : num [1:2251] 0.078 0.076 0.051 0.015 0.03 0.102 0.135 0.121 0.04 0.065 ...
- $ y         : num [1:2251] 0.091 0.266 0.225 0.366 0.426 0.474 0.498 0.489 0.596 0.608 ...
- $ markformat: chr "vector"
- $ marks     : Factor w/ 6 levels "blackoak","hickory",..: 1 1 1 1 1 1 1 1 1 1 ...
- - attr(*, "class")= chr "ppp"
-> summary(lansing$x)
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.0010  0.2290  0.4970  0.4937  0.7520  1.0000 
-> summary(lansing$y)
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.0000  0.2370  0.5080  0.5012  0.7510  0.9910 
+> library(parallel)
+> library(doParallel)
+Loading required package: foreach
+Loading required package: iterators
+> library(foreach)
 > 
-> N <- lansing$n
+> index_rm <- lansing$x != 1 & lansing$y != 0
+> lansing$x <- lansing$x[index_rm]
+> lansing$y <- lansing$y[index_rm]
+> mySeed <- 123
+> nCores <- 20
+> N <- lansing$n - 4
 > n <- 100
-> set.seed(123)
-> subset <- sample(1:N, n)
-> x <- cbind(x1 = lansing$x[subset], x2 = lansing$y[subset])
+> 
+> subsets <- vector("list", nCores)
+> for (i in 1:nCores) {
++   set.seed(mySeed)
++   subsets[[i]] <- ((i-1)*n+1):(i*n)
++ }
+> 
+> #x <- cbind(x1 = lansing$x[subset], x2 = lansing$y[subset])
 > K <- 10
 > t <- rep(0.5, n)
 > 
@@ -96,1022 +89,456 @@ List of 6
 > 
 > #starting <- list(v = v, mu = mu, theta = theta, mu1 = mu1, mu2 = mu2, alpha = alpha, beta = beta)
 > starting <- list(v = v, mu = mu + rnorm(K, 0, 0.25), 
-+ 		 theta = theta + rnorm(K, 0, 0.25), 
++                  theta = theta + rnorm(K, 0, 0.25), 
 +                  mu1 = mu1 + rnorm(K, 0, 0.25), mu2 = mu2 + rnorm(K, 0, 0.25), 
 +                  alpha = alpha + rnorm(K, 0, 0.25), beta = beta + rnorm(K, 0, 0.25))
 > step_sizes <- c(1e-3, 1e-4, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6)
-> model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 1000, nBurn = 10, nThin = 2)
-Beginning iteration 2.
-Beginning iteration 3.
-Beginning iteration 4.
-Beginning iteration 5.
-Beginning iteration 6.
-Beginning iteration 7.
-Beginning iteration 8.
-Beginning iteration 9.
-Beginning iteration 10.
-Beginning iteration 11.
-Beginning iteration 12.
-Beginning iteration 13.
-Beginning iteration 14.
-Beginning iteration 15.
-Beginning iteration 16.
-Beginning iteration 17.
-Beginning iteration 18.
-Beginning iteration 19.
-Beginning iteration 20.
-Beginning iteration 21.
-Beginning iteration 22.
-Beginning iteration 23.
-Beginning iteration 24.
-Beginning iteration 25.
-Beginning iteration 26.
-Beginning iteration 27.
-Beginning iteration 28.
-Beginning iteration 29.
-Beginning iteration 30.
-Beginning iteration 31.
-Beginning iteration 32.
-Beginning iteration 33.
-Beginning iteration 34.
-Beginning iteration 35.
-Beginning iteration 36.
-Beginning iteration 37.
-Beginning iteration 38.
-Beginning iteration 39.
-Beginning iteration 40.
-Beginning iteration 41.
-Beginning iteration 42.
-Beginning iteration 43.
-Beginning iteration 44.
-Beginning iteration 45.
-Beginning iteration 46.
-Beginning iteration 47.
-Beginning iteration 48.
-Beginning iteration 49.
-Beginning iteration 50.
-Beginning iteration 51.
-Beginning iteration 52.
-Beginning iteration 53.
-Beginning iteration 54.
-Beginning iteration 55.
-Beginning iteration 56.
-Beginning iteration 57.
-Beginning iteration 58.
-Beginning iteration 59.
-Beginning iteration 60.
-Beginning iteration 61.
-Beginning iteration 62.
-Beginning iteration 63.
-Beginning iteration 64.
-Beginning iteration 65.
-Beginning iteration 66.
-Beginning iteration 67.
-Beginning iteration 68.
-Beginning iteration 69.
-Beginning iteration 70.
-Beginning iteration 71.
-Beginning iteration 72.
-Beginning iteration 73.
-Beginning iteration 74.
-Beginning iteration 75.
-Beginning iteration 76.
-Beginning iteration 77.
-Beginning iteration 78.
-Beginning iteration 79.
-Beginning iteration 80.
-Beginning iteration 81.
-Beginning iteration 82.
-Beginning iteration 83.
-Beginning iteration 84.
-Beginning iteration 85.
-Beginning iteration 86.
-Beginning iteration 87.
-Beginning iteration 88.
-Beginning iteration 89.
-Beginning iteration 90.
-Beginning iteration 91.
-Beginning iteration 92.
-Beginning iteration 93.
-Beginning iteration 94.
-Beginning iteration 95.
-Beginning iteration 96.
-Beginning iteration 97.
-Beginning iteration 98.
-Beginning iteration 99.
-Beginning iteration 100.
-Beginning iteration 101.
-Beginning iteration 102.
-Beginning iteration 103.
-Beginning iteration 104.
-Beginning iteration 105.
-Beginning iteration 106.
-Beginning iteration 107.
-Beginning iteration 108.
-Beginning iteration 109.
-Beginning iteration 110.
-Beginning iteration 111.
-Beginning iteration 112.
-Beginning iteration 113.
-Beginning iteration 114.
-Beginning iteration 115.
-Beginning iteration 116.
-Beginning iteration 117.
-Beginning iteration 118.
-Beginning iteration 119.
-Beginning iteration 120.
-Beginning iteration 121.
-Beginning iteration 122.
-Beginning iteration 123.
-Beginning iteration 124.
-Beginning iteration 125.
-Beginning iteration 126.
-Beginning iteration 127.
-Beginning iteration 128.
-Beginning iteration 129.
-Beginning iteration 130.
-Beginning iteration 131.
-Beginning iteration 132.
-Beginning iteration 133.
-Beginning iteration 134.
-Beginning iteration 135.
-Beginning iteration 136.
-Beginning iteration 137.
-Beginning iteration 138.
-Beginning iteration 139.
-Beginning iteration 140.
-Beginning iteration 141.
-Beginning iteration 142.
-Beginning iteration 143.
-Beginning iteration 144.
-Beginning iteration 145.
-Beginning iteration 146.
-Beginning iteration 147.
-Beginning iteration 148.
-Beginning iteration 149.
-Beginning iteration 150.
-Beginning iteration 151.
-Beginning iteration 152.
-Beginning iteration 153.
-Beginning iteration 154.
-Beginning iteration 155.
-Beginning iteration 156.
-Beginning iteration 157.
-Beginning iteration 158.
-Beginning iteration 159.
-Beginning iteration 160.
-Beginning iteration 161.
-Beginning iteration 162.
-Beginning iteration 163.
-Beginning iteration 164.
-Beginning iteration 165.
-Beginning iteration 166.
-Beginning iteration 167.
-Beginning iteration 168.
-Beginning iteration 169.
-Beginning iteration 170.
-Beginning iteration 171.
-Beginning iteration 172.
-Beginning iteration 173.
-Beginning iteration 174.
-Beginning iteration 175.
-Beginning iteration 176.
-Beginning iteration 177.
-Beginning iteration 178.
-Beginning iteration 179.
-Beginning iteration 180.
-Beginning iteration 181.
-Beginning iteration 182.
-Beginning iteration 183.
-Beginning iteration 184.
-Beginning iteration 185.
-Beginning iteration 186.
-Beginning iteration 187.
-Beginning iteration 188.
-Beginning iteration 189.
-Beginning iteration 190.
-Beginning iteration 191.
-Beginning iteration 192.
-Beginning iteration 193.
-Beginning iteration 194.
-Beginning iteration 195.
-Beginning iteration 196.
-Beginning iteration 197.
-Beginning iteration 198.
-Beginning iteration 199.
-Beginning iteration 200.
-Beginning iteration 201.
-Beginning iteration 202.
-Beginning iteration 203.
-Beginning iteration 204.
-Beginning iteration 205.
-Beginning iteration 206.
-Beginning iteration 207.
-Beginning iteration 208.
-Beginning iteration 209.
-Beginning iteration 210.
-Beginning iteration 211.
-Beginning iteration 212.
-Beginning iteration 213.
-Beginning iteration 214.
-Beginning iteration 215.
-Beginning iteration 216.
-Beginning iteration 217.
-Beginning iteration 218.
-Beginning iteration 219.
-Beginning iteration 220.
-Beginning iteration 221.
-Beginning iteration 222.
-Beginning iteration 223.
-Beginning iteration 224.
-Beginning iteration 225.
-Beginning iteration 226.
-Beginning iteration 227.
-Beginning iteration 228.
-Beginning iteration 229.
-Beginning iteration 230.
-Beginning iteration 231.
-Beginning iteration 232.
-Beginning iteration 233.
-Beginning iteration 234.
-Beginning iteration 235.
-Beginning iteration 236.
-Beginning iteration 237.
-Beginning iteration 238.
-Beginning iteration 239.
-Beginning iteration 240.
-Beginning iteration 241.
-Beginning iteration 242.
-Beginning iteration 243.
-Beginning iteration 244.
-Beginning iteration 245.
-Beginning iteration 246.
-Beginning iteration 247.
-Beginning iteration 248.
-Beginning iteration 249.
-Beginning iteration 250.
-Beginning iteration 251.
-Beginning iteration 252.
-Beginning iteration 253.
-Beginning iteration 254.
-Beginning iteration 255.
-Beginning iteration 256.
-Beginning iteration 257.
-Beginning iteration 258.
-Beginning iteration 259.
-Beginning iteration 260.
-Beginning iteration 261.
-Beginning iteration 262.
-Beginning iteration 263.
-Beginning iteration 264.
-Beginning iteration 265.
-Beginning iteration 266.
-Beginning iteration 267.
-Beginning iteration 268.
-Beginning iteration 269.
-Beginning iteration 270.
-Beginning iteration 271.
-Beginning iteration 272.
-Beginning iteration 273.
-Beginning iteration 274.
-Beginning iteration 275.
-Beginning iteration 276.
-Beginning iteration 277.
-Beginning iteration 278.
-Beginning iteration 279.
-Beginning iteration 280.
-Beginning iteration 281.
-Beginning iteration 282.
-Beginning iteration 283.
-Beginning iteration 284.
-Beginning iteration 285.
-Beginning iteration 286.
-Beginning iteration 287.
-Beginning iteration 288.
-Beginning iteration 289.
-Beginning iteration 290.
-Beginning iteration 291.
-Beginning iteration 292.
-Beginning iteration 293.
-Beginning iteration 294.
-Beginning iteration 295.
-Beginning iteration 296.
-Beginning iteration 297.
-Beginning iteration 298.
-Beginning iteration 299.
-Beginning iteration 300.
-Beginning iteration 301.
-Beginning iteration 302.
-Beginning iteration 303.
-Beginning iteration 304.
-Beginning iteration 305.
-Beginning iteration 306.
-Beginning iteration 307.
-Beginning iteration 308.
-Beginning iteration 309.
-Beginning iteration 310.
-Beginning iteration 311.
-Beginning iteration 312.
-Beginning iteration 313.
-Beginning iteration 314.
-Beginning iteration 315.
-Beginning iteration 316.
-Beginning iteration 317.
-Beginning iteration 318.
-Beginning iteration 319.
-Beginning iteration 320.
-Beginning iteration 321.
-Beginning iteration 322.
-Beginning iteration 323.
-Beginning iteration 324.
-Beginning iteration 325.
-Beginning iteration 326.
-Beginning iteration 327.
-Beginning iteration 328.
-Beginning iteration 329.
-Beginning iteration 330.
-Beginning iteration 331.
-Beginning iteration 332.
-Beginning iteration 333.
-Beginning iteration 334.
-Beginning iteration 335.
-Beginning iteration 336.
-Beginning iteration 337.
-Beginning iteration 338.
-Beginning iteration 339.
-Beginning iteration 340.
-Beginning iteration 341.
-Beginning iteration 342.
-Beginning iteration 343.
-Beginning iteration 344.
-Beginning iteration 345.
-Beginning iteration 346.
-Beginning iteration 347.
-Beginning iteration 348.
-Beginning iteration 349.
-Beginning iteration 350.
-Beginning iteration 351.
-Beginning iteration 352.
-Beginning iteration 353.
-Beginning iteration 354.
-Beginning iteration 355.
-Beginning iteration 356.
-Beginning iteration 357.
-Beginning iteration 358.
-Beginning iteration 359.
-Beginning iteration 360.
-Beginning iteration 361.
-Beginning iteration 362.
-Beginning iteration 363.
-Beginning iteration 364.
-Beginning iteration 365.
-Beginning iteration 366.
-Beginning iteration 367.
-Beginning iteration 368.
-Beginning iteration 369.
-Beginning iteration 370.
-Beginning iteration 371.
-Beginning iteration 372.
-Beginning iteration 373.
-Beginning iteration 374.
-Beginning iteration 375.
-Beginning iteration 376.
-Beginning iteration 377.
-Beginning iteration 378.
-Beginning iteration 379.
-Beginning iteration 380.
-Beginning iteration 381.
-Beginning iteration 382.
-Beginning iteration 383.
-Beginning iteration 384.
-Beginning iteration 385.
-Beginning iteration 386.
-Beginning iteration 387.
-Beginning iteration 388.
-Beginning iteration 389.
-Beginning iteration 390.
-Beginning iteration 391.
-Beginning iteration 392.
-Beginning iteration 393.
-Beginning iteration 394.
-Beginning iteration 395.
-Beginning iteration 396.
-Beginning iteration 397.
-Beginning iteration 398.
-Beginning iteration 399.
-Beginning iteration 400.
-Beginning iteration 401.
-Beginning iteration 402.
-Beginning iteration 403.
-Beginning iteration 404.
-Beginning iteration 405.
-Beginning iteration 406.
-Beginning iteration 407.
-Beginning iteration 408.
-Beginning iteration 409.
-Beginning iteration 410.
-Beginning iteration 411.
-Beginning iteration 412.
-Beginning iteration 413.
-Beginning iteration 414.
-Beginning iteration 415.
-Beginning iteration 416.
-Beginning iteration 417.
-Beginning iteration 418.
-Beginning iteration 419.
-Beginning iteration 420.
-Beginning iteration 421.
-Beginning iteration 422.
-Beginning iteration 423.
-Beginning iteration 424.
-Beginning iteration 425.
-Beginning iteration 426.
-Beginning iteration 427.
-Beginning iteration 428.
-Beginning iteration 429.
-Beginning iteration 430.
-Beginning iteration 431.
-Beginning iteration 432.
-Beginning iteration 433.
-Beginning iteration 434.
-Beginning iteration 435.
-Beginning iteration 436.
-Beginning iteration 437.
-Beginning iteration 438.
-Beginning iteration 439.
-Beginning iteration 440.
-Beginning iteration 441.
-Beginning iteration 442.
-Beginning iteration 443.
-Beginning iteration 444.
-Beginning iteration 445.
-Beginning iteration 446.
-Beginning iteration 447.
-Beginning iteration 448.
-Beginning iteration 449.
-Beginning iteration 450.
-Beginning iteration 451.
-Beginning iteration 452.
-Beginning iteration 453.
-Beginning iteration 454.
-Beginning iteration 455.
-Beginning iteration 456.
-Beginning iteration 457.
-Beginning iteration 458.
-Beginning iteration 459.
-Beginning iteration 460.
-Beginning iteration 461.
-Beginning iteration 462.
-Beginning iteration 463.
-Beginning iteration 464.
-Beginning iteration 465.
-Beginning iteration 466.
-Beginning iteration 467.
-Beginning iteration 468.
-Beginning iteration 469.
-Beginning iteration 470.
-Beginning iteration 471.
-Beginning iteration 472.
-Beginning iteration 473.
-Beginning iteration 474.
-Beginning iteration 475.
-Beginning iteration 476.
-Beginning iteration 477.
-Beginning iteration 478.
-Beginning iteration 479.
-Beginning iteration 480.
-Beginning iteration 481.
-Beginning iteration 482.
-Beginning iteration 483.
-Beginning iteration 484.
-Beginning iteration 485.
-Beginning iteration 486.
-Beginning iteration 487.
-Beginning iteration 488.
-Beginning iteration 489.
-Beginning iteration 490.
-Beginning iteration 491.
-Beginning iteration 492.
-Beginning iteration 493.
-Beginning iteration 494.
-Beginning iteration 495.
-Beginning iteration 496.
-Beginning iteration 497.
-Beginning iteration 498.
-Beginning iteration 499.
-Beginning iteration 500.
-Beginning iteration 501.
-Beginning iteration 502.
-Beginning iteration 503.
-Beginning iteration 504.
-Beginning iteration 505.
-Beginning iteration 506.
-Beginning iteration 507.
-Beginning iteration 508.
-Beginning iteration 509.
-Beginning iteration 510.
-Beginning iteration 511.
-Beginning iteration 512.
-Beginning iteration 513.
-Beginning iteration 514.
-Beginning iteration 515.
-Beginning iteration 516.
-Beginning iteration 517.
-Beginning iteration 518.
-Beginning iteration 519.
-Beginning iteration 520.
-Beginning iteration 521.
-Beginning iteration 522.
-Beginning iteration 523.
-Beginning iteration 524.
-Beginning iteration 525.
-Beginning iteration 526.
-Beginning iteration 527.
-Beginning iteration 528.
-Beginning iteration 529.
-Beginning iteration 530.
-Beginning iteration 531.
-Beginning iteration 532.
-Beginning iteration 533.
-Beginning iteration 534.
-Beginning iteration 535.
-Beginning iteration 536.
-Beginning iteration 537.
-Beginning iteration 538.
-Beginning iteration 539.
-Beginning iteration 540.
-Beginning iteration 541.
-Beginning iteration 542.
-Beginning iteration 543.
-Beginning iteration 544.
-Beginning iteration 545.
-Beginning iteration 546.
-Beginning iteration 547.
-Beginning iteration 548.
-Beginning iteration 549.
-Beginning iteration 550.
-Beginning iteration 551.
-Beginning iteration 552.
-Beginning iteration 553.
-Beginning iteration 554.
-Beginning iteration 555.
-Beginning iteration 556.
-Beginning iteration 557.
-Beginning iteration 558.
-Beginning iteration 559.
-Beginning iteration 560.
-Beginning iteration 561.
-Beginning iteration 562.
-Beginning iteration 563.
-Beginning iteration 564.
-Beginning iteration 565.
-Beginning iteration 566.
-Beginning iteration 567.
-Beginning iteration 568.
-Beginning iteration 569.
-Beginning iteration 570.
-Beginning iteration 571.
-Beginning iteration 572.
-Beginning iteration 573.
-Beginning iteration 574.
-Beginning iteration 575.
-Beginning iteration 576.
-Beginning iteration 577.
-Beginning iteration 578.
-Beginning iteration 579.
-Beginning iteration 580.
-Beginning iteration 581.
-Beginning iteration 582.
-Beginning iteration 583.
-Beginning iteration 584.
-Beginning iteration 585.
-Beginning iteration 586.
-Beginning iteration 587.
-Beginning iteration 588.
-Beginning iteration 589.
-Beginning iteration 590.
-Beginning iteration 591.
-Beginning iteration 592.
-Beginning iteration 593.
-Beginning iteration 594.
-Beginning iteration 595.
-Beginning iteration 596.
-Beginning iteration 597.
-Beginning iteration 598.
-Beginning iteration 599.
-Beginning iteration 600.
-Beginning iteration 601.
-Beginning iteration 602.
-Beginning iteration 603.
-Beginning iteration 604.
-Beginning iteration 605.
-Beginning iteration 606.
-Beginning iteration 607.
-Beginning iteration 608.
-Beginning iteration 609.
-Beginning iteration 610.
-Beginning iteration 611.
-Beginning iteration 612.
-Beginning iteration 613.
-Beginning iteration 614.
-Beginning iteration 615.
-Beginning iteration 616.
-Beginning iteration 617.
-Beginning iteration 618.
-Beginning iteration 619.
-Beginning iteration 620.
-Beginning iteration 621.
-Beginning iteration 622.
-Beginning iteration 623.
-Beginning iteration 624.
-Beginning iteration 625.
-Beginning iteration 626.
-Beginning iteration 627.
-Beginning iteration 628.
-Beginning iteration 629.
-Beginning iteration 630.
-Beginning iteration 631.
-Beginning iteration 632.
-Beginning iteration 633.
-Beginning iteration 634.
-Beginning iteration 635.
-Beginning iteration 636.
-Beginning iteration 637.
-Beginning iteration 638.
-Beginning iteration 639.
-Beginning iteration 640.
-Beginning iteration 641.
-Beginning iteration 642.
-Beginning iteration 643.
-Beginning iteration 644.
-Beginning iteration 645.
-Beginning iteration 646.
-Beginning iteration 647.
-Beginning iteration 648.
-Beginning iteration 649.
-Beginning iteration 650.
-Beginning iteration 651.
-Beginning iteration 652.
-Beginning iteration 653.
-Beginning iteration 654.
-Beginning iteration 655.
-Beginning iteration 656.
-Beginning iteration 657.
-Beginning iteration 658.
-Beginning iteration 659.
-Beginning iteration 660.
-Beginning iteration 661.
-Beginning iteration 662.
-Beginning iteration 663.
-Beginning iteration 664.
-Beginning iteration 665.
-Beginning iteration 666.
-Beginning iteration 667.
-Beginning iteration 668.
-Beginning iteration 669.
-Beginning iteration 670.
-Beginning iteration 671.
-Beginning iteration 672.
-Beginning iteration 673.
-Beginning iteration 674.
-Beginning iteration 675.
-Beginning iteration 676.
-Beginning iteration 677.
-Beginning iteration 678.
-Beginning iteration 679.
-Beginning iteration 680.
-Beginning iteration 681.
-Beginning iteration 682.
-Beginning iteration 683.
-Beginning iteration 684.
-Beginning iteration 685.
-Beginning iteration 686.
-Beginning iteration 687.
-Beginning iteration 688.
-Beginning iteration 689.
-Beginning iteration 690.
-Beginning iteration 691.
-Beginning iteration 692.
-Beginning iteration 693.
-Beginning iteration 694.
-Beginning iteration 695.
-Beginning iteration 696.
-Beginning iteration 697.
-Beginning iteration 698.
-Beginning iteration 699.
-Beginning iteration 700.
-Beginning iteration 701.
-Beginning iteration 702.
-Beginning iteration 703.
-Beginning iteration 704.
-Beginning iteration 705.
-Beginning iteration 706.
-Beginning iteration 707.
-Beginning iteration 708.
-Beginning iteration 709.
-Beginning iteration 710.
-Beginning iteration 711.
-Beginning iteration 712.
-Beginning iteration 713.
-Beginning iteration 714.
-Beginning iteration 715.
-Beginning iteration 716.
-Beginning iteration 717.
-Beginning iteration 718.
-Beginning iteration 719.
-Beginning iteration 720.
-Beginning iteration 721.
-Beginning iteration 722.
-Beginning iteration 723.
-Beginning iteration 724.
-Beginning iteration 725.
-Beginning iteration 726.
-Beginning iteration 727.
-Beginning iteration 728.
-Beginning iteration 729.
-Beginning iteration 730.
-Beginning iteration 731.
-Beginning iteration 732.
-Beginning iteration 733.
-Beginning iteration 734.
-Beginning iteration 735.
-Beginning iteration 736.
-Beginning iteration 737.
-Beginning iteration 738.
-Beginning iteration 739.
-Beginning iteration 740.
-Beginning iteration 741.
-Beginning iteration 742.
-Beginning iteration 743.
-Beginning iteration 744.
-Beginning iteration 745.
-Beginning iteration 746.
-Beginning iteration 747.
-Beginning iteration 748.
-Beginning iteration 749.
-Beginning iteration 750.
-Beginning iteration 751.
-Beginning iteration 752.
-Beginning iteration 753.
-Beginning iteration 754.
-Beginning iteration 755.
-Beginning iteration 756.
-Beginning iteration 757.
-Beginning iteration 758.
-Beginning iteration 759.
-Beginning iteration 760.
-Beginning iteration 761.
-Beginning iteration 762.
-Beginning iteration 763.
-Beginning iteration 764.
-Beginning iteration 765.
-Beginning iteration 766.
-Beginning iteration 767.
-Beginning iteration 768.
-Beginning iteration 769.
-Beginning iteration 770.
-Beginning iteration 771.
-Beginning iteration 772.
-Beginning iteration 773.
-Beginning iteration 774.
-Beginning iteration 775.
-Beginning iteration 776.
-Beginning iteration 777.
-Beginning iteration 778.
-Beginning iteration 779.
-Beginning iteration 780.
-Beginning iteration 781.
-Beginning iteration 782.
-Beginning iteration 783.
-Beginning iteration 784.
-Beginning iteration 785.
-Beginning iteration 786.
-Beginning iteration 787.
-Beginning iteration 788.
-Beginning iteration 789.
-Beginning iteration 790.
-Beginning iteration 791.
-Beginning iteration 792.
-Beginning iteration 793.
-Beginning iteration 794.
-Beginning iteration 795.
-Beginning iteration 796.
-Beginning iteration 797.
-Beginning iteration 798.
-Beginning iteration 799.
-Beginning iteration 800.
-Beginning iteration 801.
-Beginning iteration 802.
-Beginning iteration 803.
-Beginning iteration 804.
-Beginning iteration 805.
-Beginning iteration 806.
-Beginning iteration 807.
-Beginning iteration 808.
-Beginning iteration 809.
-Beginning iteration 810.
-Beginning iteration 811.
-Beginning iteration 812.
-Beginning iteration 813.
-Beginning iteration 814.
-Beginning iteration 815.
-Beginning iteration 816.
-Beginning iteration 817.
-Beginning iteration 818.
-Beginning iteration 819.
-Beginning iteration 820.
-Beginning iteration 821.
-Beginning iteration 822.
-Beginning iteration 823.
-Beginning iteration 824.
-Beginning iteration 825.
-Beginning iteration 826.
-Beginning iteration 827.
-Beginning iteration 828.
-Beginning iteration 829.
-Beginning iteration 830.
-Beginning iteration 831.
-Beginning iteration 832.
-Beginning iteration 833.
-Beginning iteration 834.
-Beginning iteration 835.
-Beginning iteration 836.
-Beginning iteration 837.
-Beginning iteration 838.
-Beginning iteration 839.
-Beginning iteration 840.
-Beginning iteration 841.
-Beginning iteration 842.
-Beginning iteration 843.
-Beginning iteration 844.
-Beginning iteration 845.
-Beginning iteration 846.
-Beginning iteration 847.
-Beginning iteration 848.
-Beginning iteration 849.
-Beginning iteration 850.
-Beginning iteration 851.
-Beginning iteration 852.
-Beginning iteration 853.
-Beginning iteration 854.
-Beginning iteration 855.
-Beginning iteration 856.
-Beginning iteration 857.
-Beginning iteration 858.
-Beginning iteration 859.
-Beginning iteration 860.
-Beginning iteration 861.
-Beginning iteration 862.
-Beginning iteration 863.
-Beginning iteration 864.
-Beginning iteration 865.
-Beginning iteration 866.
-Beginning iteration 867.
-Beginning iteration 868.
-Beginning iteration 869.
-Beginning iteration 870.
-Beginning iteration 871.
-Beginning iteration 872.
-Beginning iteration 873.
-Beginning iteration 874.
-Beginning iteration 875.
-Beginning iteration 876.
-Beginning iteration 877.
-Beginning iteration 878.
-Beginning iteration 879.
-Beginning iteration 880.
-Beginning iteration 881.
-Beginning iteration 882.
-Beginning iteration 883.
-Beginning iteration 884.
-Beginning iteration 885.
-Beginning iteration 886.
-Beginning iteration 887.
-Beginning iteration 888.
-Beginning iteration 889.
-Beginning iteration 890.
-Beginning iteration 891.
-Beginning iteration 892.
-Beginning iteration 893.
-Beginning iteration 894.
-Beginning iteration 895.
-Beginning iteration 896.
-Beginning iteration 897.
-Beginning iteration 898.
-Beginning iteration 899.
-Beginning iteration 900.
-Beginning iteration 901.
-Beginning iteration 902.
-Beginning iteration 903.
-Beginning iteration 904.
-Beginning iteration 905.
-Beginning iteration 906.
-Beginning iteration 907.
-Beginning iteration 908.
-Beginning iteration 909.
-Beginning iteration 910.
-Beginning iteration 911.
-Beginning iteration 912.
-Beginning iteration 913.
-Beginning iteration 914.
-Beginning iteration 915.
-Beginning iteration 916.
-Beginning iteration 917.
-Beginning iteration 918.
-Beginning iteration 919.
-Beginning iteration 920.
-Beginning iteration 921.
-Beginning iteration 922.
-Beginning iteration 923.
-Beginning iteration 924.
-Beginning iteration 925.
-Beginning iteration 926.
-Beginning iteration 927.
-Beginning iteration 928.
-Beginning iteration 929.
-Beginning iteration 930.
-Beginning iteration 931.
-Beginning iteration 932.
-Beginning iteration 933.
-Beginning iteration 934.
-Beginning iteration 935.
-Beginning iteration 936.
-Beginning iteration 937.
-Beginning iteration 938.
-Beginning iteration 939.
-Beginning iteration 940.
-Beginning iteration 941.
-Beginning iteration 942.
-Beginning iteration 943.
-Beginning iteration 944.
-Beginning iteration 945.
-Beginning iteration 946.
-Beginning iteration 947.
-Beginning iteration 948.
-Beginning iteration 949.
-Beginning iteration 950.
-Beginning iteration 951.
-Beginning iteration 952.
-Beginning iteration 953.
-Beginning iteration 954.
-Beginning iteration 955.
-Beginning iteration 956.
-Beginning iteration 957.
-Beginning iteration 958.
-Beginning iteration 959.
-Beginning iteration 960.
-Beginning iteration 961.
-Beginning iteration 962.
-Beginning iteration 963.
-Beginning iteration 964.
-Beginning iteration 965.
-Beginning iteration 966.
-Beginning iteration 967.
-Beginning iteration 968.
-Beginning iteration 969.
-Beginning iteration 970.
-Beginning iteration 971.
-Beginning iteration 972.
-Beginning iteration 973.
-Beginning iteration 974.
-Beginning iteration 975.
-Beginning iteration 976.
-Beginning iteration 977.
-Beginning iteration 978.
-Beginning iteration 979.
-Beginning iteration 980.
-Beginning iteration 981.
-Beginning iteration 982.
-Beginning iteration 983.
-Beginning iteration 984.
-Beginning iteration 985.
-Beginning iteration 986.
-Beginning iteration 987.
-Beginning iteration 988.
-Beginning iteration 989.
-Beginning iteration 990.
-Beginning iteration 991.
-Beginning iteration 992.
-Beginning iteration 993.
-Beginning iteration 994.
-Beginning iteration 995.
-Beginning iteration 996.
-Beginning iteration 997.
-Beginning iteration 998.
-Beginning iteration 999.
-Beginning iteration 1000.
-Beginning iteration 1001.
-Beginning iteration 1002.
-Beginning iteration 1003.
-Beginning iteration 1004.
-Beginning iteration 1005.
-Beginning iteration 1006.
-Beginning iteration 1007.
-Beginning iteration 1008.
-Beginning iteration 1009.
-Beginning iteration 1010.
 > 
-> f_true <- sapply(1:n, function(i) {
+> # Parallel
+> cl <- makeCluster(nCores)
+> registerDoParallel(cl)
+> strt<-Sys.time()
+> set.seed(mySeed)
+> obj <- foreach(i = 1:nCores, .packages = c("mvtnorm", "spatstat")) %dopar% pp_parallel(i)  
+> final.time <- Sys.time() - strt 
+> stopCluster(cl)
+> 
+> str(obj)
+List of 20
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.015 0.015 0.015 0.015 0.015 0.015 0.015 0.015 0.015 0.015 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.146 0.541 0.122 0.864 0.799 ...
+  .. ..$ mu      : num [1:10] -0.792 -0.429 1.184 0.215 0.105 ...
+  .. ..$ sigma.sq: num [1:10] 0.8051 0.3935 0.3398 0.2545 0.0711 ...
+  .. ..$ mu1     : num [1:10] -1.217 -0.885 -0.576 -1.385 0.718 ...
+  .. ..$ mu2     : num [1:10] 0.875 1.29 0.678 0.449 0.386 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00321 0.92615 0.02961 0.17961 0.03267 ...
+  .. ..$ tau.sq2 : num [1:10] 2.855 1.788 0.279 0.121 1.364 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.146 0.541 0.122 0.864 0.799 ...
+  .. ..$ mu      : num [1:10] -0.792 -0.429 1.184 0.215 0.105 ...
+  .. ..$ sigma.sq: num [1:10] 0.8057 0.3935 0.3396 0.2545 0.0711 ...
+  .. ..$ mu1     : num [1:10] -1.217 -0.881 -0.575 -1.385 0.718 ...
+  .. ..$ mu2     : num [1:10] 0.875 1.295 0.678 0.451 0.386 ...
+  .. ..$ tau.sq1 : num [1:10] 0.0032 0.9249 0.0296 0.1797 0.0327 ...
+  .. ..$ tau.sq2 : num [1:10] 2.858 1.789 0.279 0.121 1.361 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.109 0.43 0.105 0.397 0.191 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8019 0.3866 0.3397 0.2495 0.0733 ...
+  .. ..$ mu1     : num [1:10] -1.181 -0.777 -0.587 -1.408 0.775 ...
+  .. ..$ mu2     : num [1:10] 0.918 1.152 0.667 0.457 0.389 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00319 0.90931 0.03006 0.18392 0.03304 ...
+  .. ..$ tau.sq2 : num [1:10] 2.844 1.516 0.275 0.122 1.317 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.109 0.43 0.105 0.397 0.191 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8019 0.3864 0.3398 0.2495 0.0733 ...
+  .. ..$ mu1     : num [1:10] -1.181 -0.777 -0.588 -1.412 0.774 ...
+  .. ..$ mu2     : num [1:10] 0.917 1.153 0.667 0.456 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00319 0.9095 0.03004 0.18378 0.03304 ...
+  .. ..$ tau.sq2 : num [1:10] 2.847 1.512 0.275 0.122 1.317 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.1069 0.6311 0.1019 0.5898 0.0917 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8234 0.3941 0.3403 0.2434 0.0734 ...
+  .. ..$ mu1     : num [1:10] -1.165 -0.83 -0.597 -1.376 0.733 ...
+  .. ..$ mu2     : num [1:10] 0.922 1.175 0.673 0.433 0.382 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00317 0.90577 0.02967 0.18503 0.0337 ...
+  .. ..$ tau.sq2 : num [1:10] 2.893 1.391 0.268 0.124 1.371 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.1069 0.6311 0.1019 0.5898 0.0917 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.823 0.3944 0.3405 0.2432 0.0734 ...
+  .. ..$ mu1     : num [1:10] -1.165 -0.831 -0.597 -1.377 0.733 ...
+  .. ..$ mu2     : num [1:10] 0.924 1.175 0.672 0.433 0.382 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00317 0.90299 0.02969 0.18552 0.03371 ...
+  .. ..$ tau.sq2 : num [1:10] 2.895 1.39 0.268 0.124 1.373 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.312 0.453 0.106 0.326 0.114 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8013 0.3942 0.3445 0.241 0.0754 ...
+  .. ..$ mu1     : num [1:10] -1.187 -0.764 -0.589 -1.36 0.72 ...
+  .. ..$ mu2     : num [1:10] 0.913 1.256 0.675 0.464 0.351 ...
+  .. ..$ tau.sq1 : num [1:10] 0.0033 0.8535 0.0299 0.1823 0.0331 ...
+  .. ..$ tau.sq2 : num [1:10] 2.865 1.716 0.28 0.121 1.297 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.312 0.453 0.106 0.326 0.114 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.801 0.3953 0.3453 0.241 0.0753 ...
+  .. ..$ mu1     : num [1:10] -1.187 -0.762 -0.588 -1.36 0.72 ...
+  .. ..$ mu2     : num [1:10] 0.914 1.257 0.68 0.463 0.356 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00329 0.85293 0.02993 0.18222 0.03312 ...
+  .. ..$ tau.sq2 : num [1:10] 2.869 1.713 0.28 0.121 1.294 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.1087 0.6008 0.2039 0.1611 0.0992 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8144 0.3862 0.3358 0.2456 0.0747 ...
+  .. ..$ mu1     : num [1:10] -1.154 -0.852 -0.594 -1.343 0.737 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.0032 0.8779 0.0306 0.1806 0.0332 ...
+  .. ..$ tau.sq2 : num [1:10] 2.913 2.829 0.282 0.122 1.3 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.1087 0.6008 0.2039 0.1611 0.0992 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8136 0.3867 0.3357 0.2456 0.0748 ...
+  .. ..$ mu1     : num [1:10] -1.153 -0.853 -0.594 -1.343 0.737 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00319 0.87508 0.03067 0.18061 0.03328 ...
+  .. ..$ tau.sq2 : num [1:10] 2.916 2.779 0.282 0.122 1.298 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.0965 0.2165 0.1032 0.1051 0.4911 ...
+  .. ..$ mu      : num [1:10] -0.79 -0.418 1.219 0.229 0.112 ...
+  .. ..$ sigma.sq: num [1:10] 0.7756 0.411 0.3439 0.2463 0.0711 ...
+  .. ..$ mu1     : num [1:10] -1.177 -0.727 -0.578 -1.365 0.67 ...
+  .. ..$ mu2     : num [1:10] 0.9 1.2 0.699 0.429 0.403 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00323 0.83478 0.03065 0.17782 0.03341 ...
+  .. ..$ tau.sq2 : num [1:10] 2.894 1.445 0.271 0.123 1.4 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.0965 0.2165 0.1032 0.1051 0.4911 ...
+  .. ..$ mu      : num [1:10] -0.79 -0.418 1.219 0.229 0.112 ...
+  .. ..$ sigma.sq: num [1:10] 0.776 0.4111 0.3443 0.2457 0.0709 ...
+  .. ..$ mu1     : num [1:10] -1.177 -0.726 -0.578 -1.364 0.669 ...
+  .. ..$ mu2     : num [1:10] 0.9 1.199 0.699 0.429 0.4 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00323 0.83688 0.03064 0.17782 0.03345 ...
+  .. ..$ tau.sq2 : num [1:10] 2.896 1.445 0.272 0.123 1.407 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.104 0.3878 0.1005 0.0947 0.4303 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8011 0.4041 0.3415 0.2442 0.0712 ...
+  .. ..$ mu1     : num [1:10] -1.196 -0.73 -0.573 -1.37 0.807 ...
+  .. ..$ mu2     : num [1:10] 0.897 1.179 0.673 0.452 0.415 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00313 0.89915 0.03004 0.17779 0.03396 ...
+  .. ..$ tau.sq2 : num [1:10] 2.909 1.429 0.274 0.117 1.344 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.104 0.3878 0.1005 0.0947 0.4303 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.801 0.4044 0.3412 0.2443 0.0714 ...
+  .. ..$ mu1     : num [1:10] -1.196 -0.73 -0.574 -1.37 0.806 ...
+  .. ..$ mu2     : num [1:10] 0.9 1.181 0.675 0.452 0.413 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00313 0.89942 0.03005 0.17751 0.03398 ...
+  .. ..$ tau.sq2 : num [1:10] 2.908 1.43 0.274 0.117 1.344 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.099 0.4556 0.0963 0.0974 0.0983 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.7983 0.3974 0.3398 0.2473 0.0736 ...
+  .. ..$ mu1     : num [1:10] -1.197 -0.708 -0.581 -1.353 0.729 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00311 0.89967 0.02994 0.17843 0.03348 ...
+  .. ..$ tau.sq2 : num [1:10] 2.8 1.372 0.268 0.118 1.281 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.099 0.4556 0.0963 0.0974 0.0983 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.7988 0.3975 0.34 0.2475 0.0737 ...
+  .. ..$ mu1     : num [1:10] -1.198 -0.709 -0.581 -1.353 0.73 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00312 0.89851 0.03001 0.17823 0.03348 ...
+  .. ..$ tau.sq2 : num [1:10] 2.799 1.372 0.268 0.118 1.281 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.1329 0.4769 0.112 0.1911 0.0975 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8025 0.3906 0.3415 0.245 0.0731 ...
+  .. ..$ mu1     : num [1:10] -1.185 -0.694 -0.607 -1.387 0.738 ...
+  .. ..$ mu2     : num [1:10] 0.932 1.175 0.671 0.433 0.383 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00317 0.93478 0.02993 0.18312 0.03299 ...
+  .. ..$ tau.sq2 : num [1:10] 2.876 1.545 0.269 0.122 1.288 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.1329 0.4769 0.112 0.1911 0.0975 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8024 0.391 0.3418 0.245 0.0732 ...
+  .. ..$ mu1     : num [1:10] -1.184 -0.694 -0.608 -1.387 0.738 ...
+  .. ..$ mu2     : num [1:10] 0.932 1.174 0.667 0.433 0.381 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00317 0.93244 0.0299 0.18329 0.033 ...
+  .. ..$ tau.sq2 : num [1:10] 2.875 1.548 0.268 0.122 1.289 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.44 0.44 0.44 0.44 0.44 0.44 0.44 0.44 0.44 0.44 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.6638 0.7132 0.6675 0.6694 0.0707 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.803 0.4022 0.3381 0.2486 0.0751 ...
+  .. ..$ mu1     : num [1:10] -1.225 -0.785 -0.578 -1.348 0.709 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00313 0.88772 0.03031 0.18139 0.03353 ...
+  .. ..$ tau.sq2 : num [1:10] 2.879 1.824 0.272 0.121 1.323 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.659 0.673 0.667 0.671 0.071 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8035 0.4021 0.3379 0.2486 0.0751 ...
+  .. ..$ mu1     : num [1:10] -1.226 -0.785 -0.578 -1.348 0.709 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00313 0.88764 0.0303 0.1814 0.03351 ...
+  .. ..$ tau.sq2 : num [1:10] 2.88 1.828 0.271 0.121 1.325 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.535 0.535 0.535 0.535 0.535 0.535 0.535 0.535 0.535 0.535 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.0938 0.6667 0.6618 0.6853 0.6644 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8099 0.4003 0.3421 0.2478 0.0731 ...
+  .. ..$ mu1     : num [1:10] -1.174 -0.755 -0.586 -1.359 0.692 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00317 0.86934 0.03006 0.18393 0.03369 ...
+  .. ..$ tau.sq2 : num [1:10] 2.828 1.621 0.263 0.123 1.312 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.0934 0.667 0.6607 0.6844 0.6659 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8109 0.4001 0.3419 0.2478 0.0732 ...
+  .. ..$ mu1     : num [1:10] -1.175 -0.756 -0.586 -1.36 0.692 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00318 0.86461 0.03007 0.18386 0.03364 ...
+  .. ..$ tau.sq2 : num [1:10] 2.828 1.613 0.263 0.123 1.311 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.108 0.132 0.09 0.104 0.566 ...
+  .. ..$ mu      : num [1:10] -0.797 -0.436 1.152 0.215 0.102 ...
+  .. ..$ sigma.sq: num [1:10] 0.8043 0.4003 0.3383 0.2511 0.0696 ...
+  .. ..$ mu1     : num [1:10] -1.179 -0.753 -0.584 -1.359 0.684 ...
+  .. ..$ mu2     : num [1:10] 0.916 1.173 0.687 0.458 0.4 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00316 0.83238 0.02994 0.17998 0.03495 ...
+  .. ..$ tau.sq2 : num [1:10] 2.768 1.416 0.277 0.12 1.402 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.108 0.132 0.09 0.104 0.566 ...
+  .. ..$ mu      : num [1:10] -0.797 -0.432 1.154 0.212 0.105 ...
+  .. ..$ sigma.sq: num [1:10] 0.8043 0.4003 0.3388 0.2516 0.0696 ...
+  .. ..$ mu1     : num [1:10] -1.179 -0.753 -0.584 -1.358 0.685 ...
+  .. ..$ mu2     : num [1:10] 0.915 1.173 0.687 0.46 0.4 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00316 0.83056 0.02995 0.18007 0.03485 ...
+  .. ..$ tau.sq2 : num [1:10] 2.764 1.416 0.277 0.12 1.409 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.0962 0.2041 0.1098 0.0967 0.5089 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.805 0.401 0.3349 0.2489 0.0715 ...
+  .. ..$ mu1     : num [1:10] -1.174 -0.757 -0.592 -1.364 0.802 ...
+  .. ..$ mu2     : num [1:10] 0.88 1.161 0.678 0.462 0.401 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00316 0.8394 0.02945 0.18126 0.0352 ...
+  .. ..$ tau.sq2 : num [1:10] 2.806 1.406 0.278 0.121 1.369 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.0962 0.2041 0.1098 0.0967 0.5089 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8052 0.401 0.3347 0.2492 0.0715 ...
+  .. ..$ mu1     : num [1:10] -1.174 -0.757 -0.592 -1.366 0.799 ...
+  .. ..$ mu2     : num [1:10] 0.879 1.161 0.678 0.462 0.403 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00316 0.83901 0.02943 0.18142 0.03528 ...
+  .. ..$ tau.sq2 : num [1:10] 2.807 1.407 0.278 0.121 1.369 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.119 0.445 0.104 0.11 0.104 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.803 0.3978 0.3347 0.2529 0.0731 ...
+  .. ..$ mu1     : num [1:10] -1.186 -0.748 -0.587 -1.374 0.716 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00314 0.91368 0.0296 0.18166 0.0338 ...
+  .. ..$ tau.sq2 : num [1:10] 2.744 1.845 0.276 0.12 1.329 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.119 0.445 0.104 0.11 0.104 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8014 0.3979 0.335 0.2531 0.0731 ...
+  .. ..$ mu1     : num [1:10] -1.186 -0.748 -0.588 -1.373 0.714 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00314 0.90892 0.02962 0.18174 0.03382 ...
+  .. ..$ tau.sq2 : num [1:10] 2.742 1.841 0.275 0.12 1.328 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.015 0.015 0.015 0.015 0.015 0.015 0.015 0.015 0.015 0.015 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.0899 0.527 0.0992 0.1959 0.7832 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8088 0.3869 0.3374 0.2505 0.0721 ...
+  .. ..$ mu1     : num [1:10] -1.178 -0.824 -0.585 -1.354 0.736 ...
+  .. ..$ mu2     : num [1:10] 0.91 1.18 0.658 0.44 0.372 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00312 0.90277 0.03052 0.18014 0.03355 ...
+  .. ..$ tau.sq2 : num [1:10] 2.761 1.541 0.272 0.121 1.304 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.0899 0.527 0.0992 0.1959 0.7832 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8063 0.3868 0.3367 0.2507 0.0721 ...
+  .. ..$ mu1     : num [1:10] -1.178 -0.825 -0.584 -1.353 0.735 ...
+  .. ..$ mu2     : num [1:10] 0.909 1.181 0.658 0.44 0.371 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00312 0.90303 0.03054 0.18015 0.03355 ...
+  .. ..$ tau.sq2 : num [1:10] 2.764 1.535 0.271 0.121 1.303 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.2044 0.3452 0.1129 0.1538 0.0987 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8131 0.3981 0.3391 0.2498 0.0733 ...
+  .. ..$ mu1     : num [1:10] -1.209 -0.772 -0.575 -1.368 0.724 ...
+  .. ..$ mu2     : num [1:10] 0.896 1.254 0.693 0.427 0.402 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00314 0.84743 0.02997 0.18148 0.03365 ...
+  .. ..$ tau.sq2 : num [1:10] 2.844 1.598 0.272 0.12 1.304 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.2044 0.3452 0.1129 0.1538 0.0987 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.813 0.3972 0.3395 0.2497 0.0733 ...
+  .. ..$ mu1     : num [1:10] -1.209 -0.772 -0.574 -1.367 0.724 ...
+  .. ..$ mu2     : num [1:10] 0.894 1.254 0.693 0.426 0.401 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00314 0.84777 0.02998 0.18144 0.03366 ...
+  .. ..$ tau.sq2 : num [1:10] 2.841 1.599 0.272 0.12 1.304 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.103 0.293 0.126 0.11 0.446 ...
+  .. ..$ mu      : num [1:10] -0.791 -0.43 1.207 0.206 0.102 ...
+  .. ..$ sigma.sq: num [1:10] 0.8213 0.3916 0.3365 0.2502 0.0712 ...
+  .. ..$ mu1     : num [1:10] -1.181 -0.776 -0.603 -1.37 0.675 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00318 0.85598 0.02923 0.18386 0.03456 ...
+  .. ..$ tau.sq2 : num [1:10] 2.843 1.625 0.264 0.12 1.373 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.103 0.293 0.126 0.11 0.446 ...
+  .. ..$ mu      : num [1:10] -0.791 -0.43 1.207 0.206 0.102 ...
+  .. ..$ sigma.sq: num [1:10] 0.8195 0.3923 0.3364 0.2501 0.0713 ...
+  .. ..$ mu1     : num [1:10] -1.181 -0.776 -0.601 -1.37 0.675 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00318 0.85651 0.02918 0.18375 0.03469 ...
+  .. ..$ tau.sq2 : num [1:10] 2.843 1.622 0.264 0.12 1.366 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.0999 0.5333 0.1061 0.0953 0.2627 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8001 0.4034 0.3431 0.2513 0.0733 ...
+  .. ..$ mu1     : num [1:10] -1.198 -0.683 -0.588 -1.362 0.785 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00312 0.91143 0.02978 0.18245 0.0336 ...
+  .. ..$ tau.sq2 : num [1:10] 2.837 1.543 0.274 0.121 1.338 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.0999 0.5333 0.1061 0.0953 0.2627 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8007 0.4033 0.3432 0.2513 0.0734 ...
+  .. ..$ mu1     : num [1:10] -1.197 -0.683 -0.59 -1.362 0.785 ...
+  .. ..$ mu2     : num [1:10] 0.905 1.172 0.682 0.452 0.388 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00312 0.91391 0.02977 0.18239 0.03361 ...
+  .. ..$ tau.sq2 : num [1:10] 2.837 1.549 0.275 0.121 1.339 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.132 0.641 0.099 0.2 0.104 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8125 0.3844 0.3388 0.2461 0.0746 ...
+  .. ..$ mu1     : num [1:10] -1.21 -0.853 -0.589 -1.352 0.727 ...
+  .. ..$ mu2     : num [1:10] 0.938 1.253 0.662 0.468 0.377 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00313 0.90985 0.03017 0.17857 0.03281 ...
+  .. ..$ tau.sq2 : num [1:10] 2.784 1.559 0.277 0.12 1.334 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.132 0.641 0.099 0.2 0.104 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.813 0.3856 0.3388 0.246 0.0746 ...
+  .. ..$ mu1     : num [1:10] -1.21 -0.853 -0.592 -1.352 0.728 ...
+  .. ..$ mu2     : num [1:10] 0.939 1.253 0.662 0.469 0.377 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00313 0.90893 0.03021 0.17842 0.03281 ...
+  .. ..$ tau.sq2 : num [1:10] 2.781 1.555 0.276 0.12 1.334 ...
+ $ :List of 3
+  ..$ acceptance      : num [1:10, 1:7] 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 0.005 ...
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:7] "v" "mu" "theta" "mu1" ...
+  ..$ posteriorMeans  :List of 7
+  .. ..$ pi      : num [1:10] 0.172 0.41 0.123 0.186 0.101 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.813 0.397 0.335 0.25 0.075 ...
+  .. ..$ mu1     : num [1:10] -1.302 -0.895 -0.578 -1.359 0.738 ...
+  .. ..$ mu2     : num [1:10] 0.946 1.329 0.686 0.431 0.417 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00324 0.87065 0.02982 0.18203 0.03305 ...
+  .. ..$ tau.sq2 : num [1:10] 2.883 2.051 0.272 0.123 1.34 ...
+  ..$ posteriorMedians:List of 7
+  .. ..$ pi      : num [1:10] 0.172 0.41 0.123 0.186 0.101 ...
+  .. ..$ mu      : num [1:10] -0.786 -0.414 1.202 0.225 0.128 ...
+  .. ..$ sigma.sq: num [1:10] 0.8121 0.3967 0.3353 0.2497 0.0751 ...
+  .. ..$ mu1     : num [1:10] -1.306 -0.895 -0.578 -1.358 0.737 ...
+  .. ..$ mu2     : num [1:10] 0.946 1.327 0.687 0.431 0.418 ...
+  .. ..$ tau.sq1 : num [1:10] 0.00324 0.87045 0.02982 0.1823 0.03306 ...
+  .. ..$ tau.sq2 : num [1:10] 2.883 2.042 0.272 0.123 1.34 ...
+> 
+> wass_pi <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$pi))
+> wass_mu <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$mu))
+> wass_sigma.sq <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$sigma.sq))
+> wass_mu1 <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$mu1))
+> wass_mu2 <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$mu2))
+> wass_tau.sq1 <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$tau.sq1))
+> wass_tau.sq2 <- rowMeans(sapply(1:nCores, function(z) obj[[z]]$posteriorMedians$tau.sq2))
+> 
+> #model <- langevin_pp(x = x, t, N, K, starting, step = step_sizes, nIter = 1000, nBurn = 10, nThin = 2)
+> 
+> x <- cbind(x1 = lansing$x[unlist(subsets)], x2 = lansing$y[unlist(subsets)])
+> 
+> f_true <- sapply(1:nrow(x), function(i) {
 +   sum(sapply(1:K, function(j) {
 +     k(t[i], x[i,1], x[i,2],
 +       mu[j], log(sig.sq[j]),
@@ -1120,15 +547,17 @@ Beginning iteration 1010.
 +   }))
 + })
 > 
-> f_est <- sapply(1:n, function(i) {
+> f_est <- sapply(1:nrow(x), function(i) {
 +   sum(sapply(1:K, function(j) {
 +     k(t[i], x[i,1], x[i,2],
-+       model$posteriorMeans$mu[j], log(model$posteriorMeans$sigma.sq[j]),
-+       model$posteriorMeans$mu1[j], model$posteriorMeans$mu2[j],
-+       log(model$posteriorMeans$tau.sq1[j]), log(model$posteriorMeans$tau.sq2[j])) * 
-+       model$posteriorMeans$pi[j]
++       wass_mu[j], log(wass_sigma.sq[j]),
++       wass_mu1[j], wass_mu2[j],
++       log(wass_tau.sq1[j]), log(wass_tau.sq2[j])) * 
++       wass_pi[j]
 +   }))
 + })
+> 
+> 
 > 
 > df_true <- data.frame(x=x[,1], y=x[,2], f=f_true)
 > df_est <- data.frame(x=x[,1], y=x[,2], f=f_est)
@@ -1144,6 +573,408 @@ Beginning iteration 1010.
 +   scale_fill_distiller(palette = "Spectral", na.value = NA, limits = lims) +
 +   theme_classic()
 > 
+> f_true
+   [1] 1.652969e-02 1.044649e-01 4.421459e-02 5.293128e-03 4.037994e-02
+   [6] 7.394594e-01 2.151776e+00 1.474196e+00 1.250567e-01 7.660384e-01
+  [11] 3.082267e+00 1.256772e+01 1.519206e+01 1.279404e+01 7.785641e-02
+  [16] 7.607925e-01 1.338085e-01 7.980722e-01 3.323000e+00 7.355062e+00
+  [21] 2.935704e+00 1.231313e+00 1.795053e+00 1.176548e+00 1.850803e-01
+  [26] 3.221794e-05 4.240140e-06 8.347575e-08 1.496509e-01 2.513494e-01
+  [31] 2.773475e-01 7.419594e-01 2.259188e-01 1.008648e-01 8.905146e+00
+  [36] 8.903108e-01 6.943856e-01 8.811983e+00 3.290403e+00 5.139478e+00
+  [41] 7.804738e+00 4.082067e+00 4.991767e+00 4.453896e+00 3.874488e+00
+  [46] 4.091672e+00 3.092205e+00 2.804211e+00 7.435560e-03 1.278571e+00
+  [51] 2.446990e-02 7.279463e-02 1.596845e+00 1.662492e+00 2.915136e+00
+  [56] 1.864450e+00 2.140440e+00 2.110433e+00 4.265924e+00 9.709334e+00
+  [61] 1.593709e+00 1.555528e+00 1.671017e+00 1.070899e+00 1.109949e+00
+  [66] 1.014005e+00 1.027942e+00 1.176404e+00 9.203473e-01 9.210172e-01
+  [71] 9.236758e-01 9.259770e-01 8.428214e-01 7.727162e-01 2.675220e-01
+  [76] 1.346406e-01 6.366732e-01 1.902601e-01 8.320108e-01 1.647994e-01
+  [81] 2.965410e-03 3.730831e-01 6.691744e-01 1.066482e+00 3.519115e+00
+  [86] 3.386605e+00 5.933272e-01 1.820210e+00 7.948851e+00 1.853496e+00
+  [91] 2.238991e+00 2.987316e+00 6.597935e+00 2.822502e+00 2.556208e+00
+  [96] 3.253576e+00 5.199952e+00 2.513077e-01 1.823712e-01 8.387730e-02
+ [101]           NA           NA           NA           NA           NA
+ [106]           NA           NA           NA           NA           NA
+ [111]           NA           NA           NA           NA           NA
+ [116]           NA           NA           NA           NA           NA
+ [121]           NA           NA           NA           NA           NA
+ [126]           NA           NA           NA           NA           NA
+ [131]           NA           NA           NA           NA           NA
+ [136]           NA           NA           NA           NA           NA
+ [141]           NA           NA           NA           NA           NA
+ [146]           NA           NA           NA           NA           NA
+ [151]           NA           NA           NA           NA           NA
+ [156]           NA           NA           NA           NA           NA
+ [161]           NA           NA           NA           NA           NA
+ [166]           NA           NA           NA           NA           NA
+ [171]           NA           NA           NA           NA           NA
+ [176]           NA           NA           NA           NA           NA
+ [181]           NA           NA           NA           NA           NA
+ [186]           NA           NA           NA           NA           NA
+ [191]           NA           NA           NA           NA           NA
+ [196]           NA           NA           NA           NA           NA
+ [201]           NA           NA           NA           NA           NA
+ [206]           NA           NA           NA           NA           NA
+ [211]           NA           NA           NA           NA           NA
+ [216]           NA           NA           NA           NA           NA
+ [221]           NA           NA           NA           NA           NA
+ [226]           NA           NA           NA           NA           NA
+ [231]           NA           NA           NA           NA           NA
+ [236]           NA           NA           NA           NA           NA
+ [241]           NA           NA           NA           NA           NA
+ [246]           NA           NA           NA           NA           NA
+ [251]           NA           NA           NA           NA           NA
+ [256]           NA           NA           NA           NA           NA
+ [261]           NA           NA           NA           NA           NA
+ [266]           NA           NA           NA           NA           NA
+ [271]           NA           NA           NA           NA           NA
+ [276]           NA           NA           NA           NA           NA
+ [281]           NA           NA           NA           NA           NA
+ [286]           NA           NA           NA           NA           NA
+ [291]           NA           NA           NA           NA           NA
+ [296]           NA           NA           NA           NA           NA
+ [301]           NA           NA           NA           NA           NA
+ [306]           NA           NA           NA           NA           NA
+ [311]           NA           NA           NA           NA           NA
+ [316]           NA           NA           NA           NA           NA
+ [321]           NA           NA           NA           NA           NA
+ [326]           NA           NA           NA           NA           NA
+ [331]           NA           NA           NA           NA           NA
+ [336]           NA           NA           NA           NA           NA
+ [341]           NA           NA           NA           NA           NA
+ [346]           NA           NA           NA           NA           NA
+ [351]           NA           NA           NA           NA           NA
+ [356]           NA           NA           NA           NA           NA
+ [361]           NA           NA           NA           NA           NA
+ [366]           NA           NA           NA           NA           NA
+ [371]           NA           NA           NA           NA           NA
+ [376]           NA           NA           NA           NA           NA
+ [381]           NA           NA           NA           NA           NA
+ [386]           NA           NA           NA           NA           NA
+ [391]           NA           NA           NA           NA           NA
+ [396]           NA           NA           NA           NA           NA
+ [401]           NA           NA           NA           NA           NA
+ [406]           NA           NA           NA           NA           NA
+ [411]           NA           NA           NA           NA           NA
+ [416]           NA           NA           NA           NA           NA
+ [421]           NA           NA           NA           NA           NA
+ [426]           NA           NA           NA           NA           NA
+ [431]           NA           NA           NA           NA           NA
+ [436]           NA           NA           NA           NA           NA
+ [441]           NA           NA           NA           NA           NA
+ [446]           NA           NA           NA           NA           NA
+ [451]           NA           NA           NA           NA           NA
+ [456]           NA           NA           NA           NA           NA
+ [461]           NA           NA           NA           NA           NA
+ [466]           NA           NA           NA           NA           NA
+ [471]           NA           NA           NA           NA           NA
+ [476]           NA           NA           NA           NA           NA
+ [481]           NA           NA           NA           NA           NA
+ [486]           NA           NA           NA           NA           NA
+ [491]           NA           NA           NA           NA           NA
+ [496]           NA           NA           NA           NA           NA
+ [501]           NA           NA           NA           NA           NA
+ [506]           NA           NA           NA           NA           NA
+ [511]           NA           NA           NA           NA           NA
+ [516]           NA           NA           NA           NA           NA
+ [521]           NA           NA           NA           NA           NA
+ [526]           NA           NA           NA           NA           NA
+ [531]           NA           NA           NA           NA           NA
+ [536]           NA           NA           NA           NA           NA
+ [541]           NA           NA           NA           NA           NA
+ [546]           NA           NA           NA           NA           NA
+ [551]           NA           NA           NA           NA           NA
+ [556]           NA           NA           NA           NA           NA
+ [561]           NA           NA           NA           NA           NA
+ [566]           NA           NA           NA           NA           NA
+ [571]           NA           NA           NA           NA           NA
+ [576]           NA           NA           NA           NA           NA
+ [581]           NA           NA           NA           NA           NA
+ [586]           NA           NA           NA           NA           NA
+ [591]           NA           NA           NA           NA           NA
+ [596]           NA           NA           NA           NA           NA
+ [601]           NA           NA           NA           NA           NA
+ [606]           NA           NA           NA           NA           NA
+ [611]           NA           NA           NA           NA           NA
+ [616]           NA           NA           NA           NA           NA
+ [621]           NA           NA           NA           NA           NA
+ [626]           NA           NA           NA           NA           NA
+ [631]           NA           NA           NA           NA           NA
+ [636]           NA           NA           NA           NA           NA
+ [641]           NA           NA           NA           NA           NA
+ [646]           NA           NA           NA           NA           NA
+ [651]           NA           NA           NA           NA           NA
+ [656]           NA           NA           NA           NA           NA
+ [661]           NA           NA           NA           NA           NA
+ [666]           NA           NA           NA           NA           NA
+ [671]           NA           NA           NA           NA           NA
+ [676]           NA           NA           NA           NA           NA
+ [681]           NA           NA           NA           NA           NA
+ [686]           NA           NA           NA           NA           NA
+ [691]           NA           NA           NA           NA           NA
+ [696]           NA           NA           NA           NA           NA
+ [701]           NA           NA           NA           NA           NA
+ [706]           NA           NA           NA           NA           NA
+ [711]           NA           NA           NA           NA           NA
+ [716]           NA           NA           NA           NA           NA
+ [721]           NA           NA           NA           NA           NA
+ [726]           NA           NA           NA           NA           NA
+ [731]           NA           NA           NA           NA           NA
+ [736]           NA           NA           NA           NA           NA
+ [741]           NA           NA           NA           NA           NA
+ [746]           NA           NA           NA           NA           NA
+ [751]           NA           NA           NA           NA           NA
+ [756]           NA           NA           NA           NA           NA
+ [761]           NA           NA           NA           NA           NA
+ [766]           NA           NA           NA           NA           NA
+ [771]           NA           NA           NA           NA           NA
+ [776]           NA           NA           NA           NA           NA
+ [781]           NA           NA           NA           NA           NA
+ [786]           NA           NA           NA           NA           NA
+ [791]           NA           NA           NA           NA           NA
+ [796]           NA           NA           NA           NA           NA
+ [801]           NA           NA           NA           NA           NA
+ [806]           NA           NA           NA           NA           NA
+ [811]           NA           NA           NA           NA           NA
+ [816]           NA           NA           NA           NA           NA
+ [821]           NA           NA           NA           NA           NA
+ [826]           NA           NA           NA           NA           NA
+ [831]           NA           NA           NA           NA           NA
+ [836]           NA           NA           NA           NA           NA
+ [841]           NA           NA           NA           NA           NA
+ [846]           NA           NA           NA           NA           NA
+ [851]           NA           NA           NA           NA           NA
+ [856]           NA           NA           NA           NA           NA
+ [861]           NA           NA           NA           NA           NA
+ [866]           NA           NA           NA           NA           NA
+ [871]           NA           NA           NA           NA           NA
+ [876]           NA           NA           NA           NA           NA
+ [881]           NA           NA           NA           NA           NA
+ [886]           NA           NA           NA           NA           NA
+ [891]           NA           NA           NA           NA           NA
+ [896]           NA           NA           NA           NA           NA
+ [901]           NA           NA           NA           NA           NA
+ [906]           NA           NA           NA           NA           NA
+ [911]           NA           NA           NA           NA           NA
+ [916]           NA           NA           NA           NA           NA
+ [921]           NA           NA           NA           NA           NA
+ [926]           NA           NA           NA           NA           NA
+ [931]           NA           NA           NA           NA           NA
+ [936]           NA           NA           NA           NA           NA
+ [941]           NA           NA           NA           NA           NA
+ [946]           NA           NA           NA           NA           NA
+ [951]           NA           NA           NA           NA           NA
+ [956]           NA           NA           NA           NA           NA
+ [961]           NA           NA           NA           NA           NA
+ [966]           NA           NA           NA           NA           NA
+ [971]           NA           NA           NA           NA           NA
+ [976]           NA           NA           NA           NA           NA
+ [981]           NA           NA           NA           NA           NA
+ [986]           NA           NA           NA           NA           NA
+ [991]           NA           NA           NA           NA           NA
+ [996]           NA           NA           NA           NA           NA
+[1001]           NA           NA           NA           NA           NA
+[1006]           NA           NA           NA           NA           NA
+[1011]           NA           NA           NA           NA           NA
+[1016]           NA           NA           NA           NA           NA
+[1021]           NA           NA           NA           NA           NA
+[1026]           NA           NA           NA           NA           NA
+[1031]           NA           NA           NA           NA           NA
+[1036]           NA           NA           NA           NA           NA
+[1041]           NA           NA           NA           NA           NA
+[1046]           NA           NA           NA           NA           NA
+[1051]           NA           NA           NA           NA           NA
+[1056]           NA           NA           NA           NA           NA
+[1061]           NA           NA           NA           NA           NA
+[1066]           NA           NA           NA           NA           NA
+[1071]           NA           NA           NA           NA           NA
+[1076]           NA           NA           NA           NA           NA
+[1081]           NA           NA           NA           NA           NA
+[1086]           NA           NA           NA           NA           NA
+[1091]           NA           NA           NA           NA           NA
+[1096]           NA           NA           NA           NA           NA
+[1101]           NA           NA           NA           NA           NA
+[1106]           NA           NA           NA           NA           NA
+[1111]           NA           NA           NA           NA           NA
+[1116]           NA           NA           NA           NA           NA
+[1121]           NA           NA           NA           NA           NA
+[1126]           NA           NA           NA           NA           NA
+[1131]           NA           NA           NA           NA           NA
+[1136]           NA           NA           NA           NA           NA
+[1141]           NA           NA           NA           NA           NA
+[1146]           NA           NA           NA           NA           NA
+[1151]           NA           NA           NA           NA           NA
+[1156]           NA           NA           NA           NA           NA
+[1161]           NA           NA           NA           NA           NA
+[1166]           NA           NA           NA           NA           NA
+[1171]           NA           NA           NA           NA           NA
+[1176]           NA           NA           NA           NA           NA
+[1181]           NA           NA           NA           NA           NA
+[1186]           NA           NA           NA           NA           NA
+[1191]           NA           NA           NA           NA           NA
+[1196]           NA           NA           NA           NA           NA
+[1201]           NA           NA           NA           NA           NA
+[1206]           NA           NA           NA           NA           NA
+[1211]           NA           NA           NA           NA           NA
+[1216]           NA           NA           NA           NA           NA
+[1221]           NA           NA           NA           NA           NA
+[1226]           NA           NA           NA           NA           NA
+[1231]           NA           NA           NA           NA           NA
+[1236]           NA           NA           NA           NA           NA
+[1241]           NA           NA           NA           NA           NA
+[1246]           NA           NA           NA           NA           NA
+[1251]           NA           NA           NA           NA           NA
+[1256]           NA           NA           NA           NA           NA
+[1261]           NA           NA           NA           NA           NA
+[1266]           NA           NA           NA           NA           NA
+[1271]           NA           NA           NA           NA           NA
+[1276]           NA           NA           NA           NA           NA
+[1281]           NA           NA           NA           NA           NA
+[1286]           NA           NA           NA           NA           NA
+[1291]           NA           NA           NA           NA           NA
+[1296]           NA           NA           NA           NA           NA
+[1301]           NA           NA           NA           NA           NA
+[1306]           NA           NA           NA           NA           NA
+[1311]           NA           NA           NA           NA           NA
+[1316]           NA           NA           NA           NA           NA
+[1321]           NA           NA           NA           NA           NA
+[1326]           NA           NA           NA           NA           NA
+[1331]           NA           NA           NA           NA           NA
+[1336]           NA           NA           NA           NA           NA
+[1341]           NA           NA           NA           NA           NA
+[1346]           NA           NA           NA           NA           NA
+[1351]           NA           NA           NA           NA           NA
+[1356]           NA           NA           NA           NA           NA
+[1361]           NA           NA           NA           NA           NA
+[1366]           NA           NA           NA           NA           NA
+[1371]           NA           NA           NA           NA           NA
+[1376]           NA           NA           NA           NA           NA
+[1381]           NA           NA           NA           NA           NA
+[1386]           NA           NA           NA           NA           NA
+[1391]           NA           NA           NA           NA           NA
+[1396]           NA           NA           NA           NA           NA
+[1401]           NA           NA           NA           NA           NA
+[1406]           NA           NA           NA           NA           NA
+[1411]           NA           NA           NA           NA           NA
+[1416]           NA           NA           NA           NA           NA
+[1421]           NA           NA           NA           NA           NA
+[1426]           NA           NA           NA           NA           NA
+[1431]           NA           NA           NA           NA           NA
+[1436]           NA           NA           NA           NA           NA
+[1441]           NA           NA           NA           NA           NA
+[1446]           NA           NA           NA           NA           NA
+[1451]           NA           NA           NA           NA           NA
+[1456]           NA           NA           NA           NA           NA
+[1461]           NA           NA           NA           NA           NA
+[1466]           NA           NA           NA           NA           NA
+[1471]           NA           NA           NA           NA           NA
+[1476]           NA           NA           NA           NA           NA
+[1481]           NA           NA           NA           NA           NA
+[1486]           NA           NA           NA           NA           NA
+[1491]           NA           NA           NA           NA           NA
+[1496]           NA           NA           NA           NA           NA
+[1501]           NA           NA           NA           NA           NA
+[1506]           NA           NA           NA           NA           NA
+[1511]           NA           NA           NA           NA           NA
+[1516]           NA           NA           NA           NA           NA
+[1521]           NA           NA           NA           NA           NA
+[1526]           NA           NA           NA           NA           NA
+[1531]           NA           NA           NA           NA           NA
+[1536]           NA           NA           NA           NA           NA
+[1541]           NA           NA           NA           NA           NA
+[1546]           NA           NA           NA           NA           NA
+[1551]           NA           NA           NA           NA           NA
+[1556]           NA           NA           NA           NA           NA
+[1561]           NA           NA           NA           NA           NA
+[1566]           NA           NA           NA           NA           NA
+[1571]           NA           NA           NA           NA           NA
+[1576]           NA           NA           NA           NA           NA
+[1581]           NA           NA           NA           NA           NA
+[1586]           NA           NA           NA           NA           NA
+[1591]           NA           NA           NA           NA           NA
+[1596]           NA           NA           NA           NA           NA
+[1601]           NA           NA           NA           NA           NA
+[1606]           NA           NA           NA           NA           NA
+[1611]           NA           NA           NA           NA           NA
+[1616]           NA           NA           NA           NA           NA
+[1621]           NA           NA           NA           NA           NA
+[1626]           NA           NA           NA           NA           NA
+[1631]           NA           NA           NA           NA           NA
+[1636]           NA           NA           NA           NA           NA
+[1641]           NA           NA           NA           NA           NA
+[1646]           NA           NA           NA           NA           NA
+[1651]           NA           NA           NA           NA           NA
+[1656]           NA           NA           NA           NA           NA
+[1661]           NA           NA           NA           NA           NA
+[1666]           NA           NA           NA           NA           NA
+[1671]           NA           NA           NA           NA           NA
+[1676]           NA           NA           NA           NA           NA
+[1681]           NA           NA           NA           NA           NA
+[1686]           NA           NA           NA           NA           NA
+[1691]           NA           NA           NA           NA           NA
+[1696]           NA           NA           NA           NA           NA
+[1701]           NA           NA           NA           NA           NA
+[1706]           NA           NA           NA           NA           NA
+[1711]           NA           NA           NA           NA           NA
+[1716]           NA           NA           NA           NA           NA
+[1721]           NA           NA           NA           NA           NA
+[1726]           NA           NA           NA           NA           NA
+[1731]           NA           NA           NA           NA           NA
+[1736]           NA           NA           NA           NA           NA
+[1741]           NA           NA           NA           NA           NA
+[1746]           NA           NA           NA           NA           NA
+[1751]           NA           NA           NA           NA           NA
+[1756]           NA           NA           NA           NA           NA
+[1761]           NA           NA           NA           NA           NA
+[1766]           NA           NA           NA           NA           NA
+[1771]           NA           NA           NA           NA           NA
+[1776]           NA           NA           NA           NA           NA
+[1781]           NA           NA           NA           NA           NA
+[1786]           NA           NA           NA           NA           NA
+[1791]           NA           NA           NA           NA           NA
+[1796]           NA           NA           NA           NA           NA
+[1801]           NA           NA           NA           NA           NA
+[1806]           NA           NA           NA           NA           NA
+[1811]           NA           NA           NA           NA           NA
+[1816]           NA           NA           NA           NA           NA
+[1821]           NA           NA           NA           NA           NA
+[1826]           NA           NA           NA           NA           NA
+[1831]           NA           NA           NA           NA           NA
+[1836]           NA           NA           NA           NA           NA
+[1841]           NA           NA           NA           NA           NA
+[1846]           NA           NA           NA           NA           NA
+[1851]           NA           NA           NA           NA           NA
+[1856]           NA           NA           NA           NA           NA
+[1861]           NA           NA           NA           NA           NA
+[1866]           NA           NA           NA           NA           NA
+[1871]           NA           NA           NA           NA           NA
+[1876]           NA           NA           NA           NA           NA
+[1881]           NA           NA           NA           NA           NA
+[1886]           NA           NA           NA           NA           NA
+[1891]           NA           NA           NA           NA           NA
+[1896]           NA           NA           NA           NA           NA
+[1901]           NA           NA           NA           NA           NA
+[1906]           NA           NA           NA           NA           NA
+[1911]           NA           NA           NA           NA           NA
+[1916]           NA           NA           NA           NA           NA
+[1921]           NA           NA           NA           NA           NA
+[1926]           NA           NA           NA           NA           NA
+[1931]           NA           NA           NA           NA           NA
+[1936]           NA           NA           NA           NA           NA
+[1941]           NA           NA           NA           NA           NA
+[1946]           NA           NA           NA           NA           NA
+[1951]           NA           NA           NA           NA           NA
+[1956]           NA           NA           NA           NA           NA
+[1961]           NA           NA           NA           NA           NA
+[1966]           NA           NA           NA           NA           NA
+[1971]           NA           NA           NA           NA           NA
+[1976]           NA           NA           NA           NA           NA
+[1981]           NA           NA           NA           NA           NA
+[1986]           NA           NA           NA           NA           NA
+[1991]           NA           NA           NA           NA           NA
+[1996]           NA           NA           NA           NA           NA
+> 
 > library(interp)
 
 Attaching package: ‘interp’
@@ -1155,87 +986,7 @@ The following object is masked from ‘package:spatstat.geom’:
 > df_true <- interp(x[,1], x[,2], f_true, nx = 50, ny = 50) |> 
 +   interp2xyz() |> 
 +   as.data.frame()
-> ggplot(data = df_true, aes(x, y)) +
-+   geom_raster(aes(fill = z)) +
-+   scale_fill_distiller(palette = "Spectral", na.value = NA, limits = lims) + 
-+   theme_classic() +
-+   ggtitle("True f")
-Warning message:
-Removed 409 rows containing missing values (`geom_raster()`). 
-> ggsave(filename = "figures/surf_truth.pdf", height = 5)
-Saving 7 x 5 in image
-Warning message:
-Removed 409 rows containing missing values (`geom_raster()`). 
-> 
-> df_est <- interp(x[,1], x[,2], f_est, nx = 50, ny = 50) |> 
-+   interp2xyz() |> 
-+   as.data.frame()
-> ggplot(data = df_est, aes(x, y)) +
-+   geom_raster(aes(fill = z)) +
-+   scale_fill_distiller(palette = "Spectral", na.value = NA, limits = lims) + 
-+   theme_classic() +
-+   ggtitle("Estimated f")
-Warning message:
-Removed 341 rows containing missing values (`geom_raster()`). 
-> ggsave(filename = "figures/surf_est.pdf", height = 5)
-Saving 7 x 5 in image
-Warning message:
-Removed 341 rows containing missing values (`geom_raster()`). 
-> 
-> model$acceptance
-               v        mu     theta        mu1        mu2      alpha      beta
- [1,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
- [2,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
- [3,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
- [4,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
- [5,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
- [6,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
- [7,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
- [8,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
- [9,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
-[10,] 0.06831683 0.4435644 0.4831683 0.08316832 0.02178218 0.05445545 0.1089109
-> starting
-$v
- [1] -2.197225 -2.197225 -2.197225 -2.197225 -2.197225 -2.197225 -2.197225
- [8] -2.197225 -2.197225 -2.197225
-
-$mu
- [1] -0.26380826  0.03732122  1.48870371 -0.98911833  0.29491200 -0.18519107
- [7]  0.38217196  0.63296335  1.57616005  0.51290787
-
-$theta
- [1]  0.001447685 -2.207115711 -1.109564835 -0.975652069 -0.954146679
- [6] -1.875493141 -2.232961733 -0.972830391 -2.121458098 -0.166786846
-
-$mu1
- [1]  0.02775593  0.15378659 -0.67224610 -1.19681238 -0.90665324  0.35774219
- [7] -0.94875994 -0.70817355 -0.37181195  1.36607419
-
-$mu2
- [1] -0.5594959  0.1198146  0.1584498 -1.0328570  0.2016560  1.4846049
- [7]  1.1285461  0.1128054 -0.4306244 -2.3006667
-
-$alpha
- [1] -0.1577950  0.2355475  0.4089588 -1.7174171 -1.4505059 -1.6122835
- [7] -2.3901238 -2.4841916 -0.1068230 -1.1389112
-
-$beta
- [1] -1.4530191 -1.1658756 -1.8693597 -2.7885551  0.6701583 -2.6410433
- [7]  0.4567148 -3.7916042 -1.6759433 -2.0351374
-
-> mu[1]
-[1] -0.04691673
-> sig.sq[1]
-[1] 0.8387933
-> mu1[1]
-[1] 0.3011534
-> mu2[1]
-[1] -0.6519499
-> tau.sq1[1]
-[1] 0.8099786
-> tau.sq2[1]
-[1] 0.2434553
-> 
-> proc.time()
-     user    system   elapsed 
-20134.158    99.421 20235.611 
+Error in interp(x[, 1], x[, 2], f_true, nx = 50, ny = 50) : 
+  missing values and Infs not allowed
+Calls: as.data.frame -> interp2xyz -> stopifnot -> interp
+Execution halted
