@@ -34,8 +34,8 @@ langevin_pp <- function(x, t, N, K,
     ### Update v ###
     grad <- gradient(param = "v", v[i-1,], mu[i-1,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,])
     v_prop <- v[i-1, ] + step[1] * grad + sqrt(2*step[1]) * rmvnorm(1, sigma = diag(K))
-    MHratio <- loglik(t, x, v_prop, mu[i-1,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1]) - 
-      loglik(t, x, v[i-1,], mu[i-1,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1]) + 
+    MHratio <- loglik(t, x, v_prop, mu[i-1,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,]) - 
+      loglik(t, x, v[i-1,], mu[i-1,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,]) + 
       logPriorPi(invLogit(v_prop)) - logPriorPi(invLogit(v[i-1,])) + 
       sum(log(invLogit(v_prop))) - sum(log(invLogit(v[i-1,]))) # Jacobians
     if(runif(1) < exp(MHratio)) {
@@ -48,8 +48,8 @@ langevin_pp <- function(x, t, N, K,
     ### Update mu ###
     grad <- gradient(param = "mu", v[i,], mu[i-1,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,])
     mu_prop <- mu[i-1, ] + step[2] * grad + sqrt(2*step[2]) * rmvnorm(1, sigma = diag(K))
-    MHratio <- loglik(t, x, v[i,], mu_prop, theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1]) - 
-      loglik(t, x, v[i,], mu[i-1,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1]) + 
+    MHratio <- loglik(t, x, v[i,], mu_prop, theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,]) - 
+      loglik(t, x, v[i,], mu[i-1,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,]) + 
       logPriorMu(mu_prop) - logPriorMu(mu[i-1,])
     if(runif(1) < exp(MHratio)) {
       mu[i,] <- mu_prop
@@ -61,8 +61,8 @@ langevin_pp <- function(x, t, N, K,
     ### Update theta ###
     grad <- gradient(param = "theta", v[i,], mu[i,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,])
     theta_prop <- theta[i-1, ] + step[3] * grad + sqrt(2*step[3]) * rmvnorm(1, sigma = diag(K))
-    MHratio <- loglik(t, x, v[i,], mu[i,], theta_prop, mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1]) - 
-      loglik(t, x, v[i,], mu[i,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1]) + 
+    MHratio <- loglik(t, x, v[i,], mu[i,], theta_prop, mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,]) - 
+      loglik(t, x, v[i,], mu[i,], theta[i-1,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,]) + 
       logPriorSigma2(exp(theta_prop)) - logPriorSigma2(exp(theta[i-1,])) +
       sum(theta_prop) - sum(theta[i-1,]) # Log of Jacobian cancels out
     if(runif(1) < exp(MHratio)) {
@@ -75,8 +75,8 @@ langevin_pp <- function(x, t, N, K,
     ### Update mu1 ###
     grad <- gradient(param = "mu1", v[i,], mu[i,], theta[i,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,])
     mu1_prop <- mu1[i-1, ] + step[4] * grad + sqrt(2*step[4]) * rmvnorm(1, sigma = diag(K))
-    MHratio <- loglik(t, x, v[i,], mu[i,], theta[i,], mu1_prop, mu2[i-1,], alpha[i-1,], beta[i-1]) - 
-      loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1]) + 
+    MHratio <- loglik(t, x, v[i,], mu[i,], theta[i,], mu1_prop, mu2[i-1,], alpha[i-1,], beta[i-1,]) - 
+      loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i-1,], mu2[i-1,], alpha[i-1,], beta[i-1,]) + 
       logPriorMu(mu1_prop) - logPriorMu(mu1[i-1,])
     if(runif(1) < exp(MHratio)) {
       mu1[i,] <- mu1_prop
@@ -88,8 +88,8 @@ langevin_pp <- function(x, t, N, K,
     ### Update mu2 ###
     grad <- gradient(param = "mu2", v[i,], mu[i,], theta[i,], mu1[i,], mu2[i-1,], alpha[i-1,], beta[i-1,])
     mu2_prop <- mu2[i-1, ] + step[5] * grad + sqrt(2*step[5]) * rmvnorm(1, sigma = diag(K))
-    MHratio <- loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2_prop, alpha[i-1,], beta[i-1]) - 
-      loglik(t, x, v[i,], mu[i,], theta[i,], mu[i,], mu2[i-1,], alpha[i-1,], beta[i-1]) + 
+    MHratio <- loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2_prop, alpha[i-1,], beta[i-1,]) - 
+      loglik(t, x, v[i,], mu[i,], theta[i,], mu[i,], mu2[i-1,], alpha[i-1,], beta[i-1,]) + 
       logPriorMu(mu2_prop) - logPriorMu(mu2[i-1,])
     if(runif(1) < exp(MHratio)) {
       mu2[i,] <- mu2_prop
@@ -101,8 +101,8 @@ langevin_pp <- function(x, t, N, K,
     ### Update alpha ###
     grad <- gradient(param = "alpha", v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha[i-1,], beta[i-1,])
     alpha_prop <- alpha[i-1, ] + step[6] * grad + sqrt(2*step[6]) * rmvnorm(1, sigma = diag(K))
-    MHratio <- loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha_prop, beta[i-1]) - 
-      loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha[i-1,], beta[i-1]) + 
+    MHratio <- loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha_prop, beta[i-1,]) - 
+      loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha[i-1,], beta[i-1,]) + 
       logPriorSigma2(exp(alpha_prop)) - logPriorSigma2(exp(alpha[i-1,])) + 
       sum(alpha_prop) - sum(alpha[i-1,]) # Log of Jacobian cancels out
     if(runif(1) < exp(MHratio)) {
@@ -116,7 +116,7 @@ langevin_pp <- function(x, t, N, K,
     grad <- gradient(param = "beta", v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha[i,], beta[i-1,])
     beta_prop <- beta[i-1, ] + step[7] * grad + sqrt(2*step[7]) * rmvnorm(1, sigma = diag(K))
     MHratio <- loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha[i,], beta_prop) - 
-      loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha[i,], beta[i-1]) + 
+      loglik(t, x, v[i,], mu[i,], theta[i,], mu1[i,], mu2[i,], alpha[i,], beta[i-1,]) + 
       logPriorSigma2(exp(beta_prop)) - logPriorSigma2(exp(beta[i-1,])) + 
       sum(beta_prop) - sum(beta[i-1,]) # Log of Jacobian cancels out
     if(runif(1) < exp(MHratio)) {
