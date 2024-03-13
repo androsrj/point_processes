@@ -113,10 +113,8 @@ ggplot(data=df_est, aes(x, y, height=0.05, width=0.05)) +
   scale_fill_distiller(palette = "Spectral", na.value = NA, limits = lims) +
   theme_classic()
 
-f_true
-
 library(interp)
-df_true <- interp(x[,1], x[,2], f_true, nx = 50, ny = 50) |> 
+df_true <- interp(x[,1], x[,2], f_true, nx = 50, ny = 50, duplicate="mean") |> 
   interp2xyz() |> 
   as.data.frame()
 ggplot(data = df_true, aes(x, y)) +
@@ -126,7 +124,7 @@ ggplot(data = df_true, aes(x, y)) +
   ggtitle("True f")
 ggsave(filename = "figures/surf_truth.pdf", height = 5)
 
-df_est <- interp(x[,1], x[,2], f_est, nx = 50, ny = 50) |> 
+df_est <- interp(x[,1], x[,2], f_est, nx = 50, ny = 50, duplicate="mean") |> 
   interp2xyz() |> 
   as.data.frame()
 ggplot(data = df_est, aes(x, y)) +
