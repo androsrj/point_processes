@@ -97,7 +97,7 @@ f_est <- sapply(1:nrow(x), function(i) {
   }))
 })
 
-
+save(f_est, f_true, file = "plot_data.RData")
 
 df_true <- data.frame(x=x[,1], y=x[,2], f=f_true)
 df_est <- data.frame(x=x[,1], y=x[,2], f=f_est)
