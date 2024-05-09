@@ -1,4 +1,4 @@
-predict.ppm2 <- function (object, N, m, window = NULL, ngrid = NULL, locations = NULL, 
+predict.ppm2 <- function (object, nCores, window = NULL, ngrid = NULL, locations = NULL, 
           covariates = NULL, type = c("trend", "cif", "intensity", 
                                       "count"), se = FALSE, interval = c("none", "confidence", 
                                                                          "prediction"), level = 0.95, X = data.ppm(object), correction, 
@@ -103,30 +103,30 @@ predict.ppm2 <- function (object, N, m, window = NULL, ngrid = NULL, locations =
   if (type == "count") {
     if (is.null(window)) {
       if (!seonly) 
-        est <- predconfPois2(NULL, model, level, estimatename, N = N, m = m,
+        est <- predconfPois2(NULL, model, level, estimatename, nCores = nCores,
                             new.coef = new.coef)
       if (se) 
-        sem <- predconfPois2(NULL, model, level, "se", N = N, m = m,
+        sem <- predconfPois2(NULL, model, level, "se", nCores = nCores,
                             new.coef = new.coef)
     }
     else if (is.tess(window)) {
       tilz <- tiles(window)
       if (!seonly) {
-        est <- lapply(tilz, predconfPois2, object = model, N = N, m = m,
+        est <- lapply(tilz, predconfPois2, object = model, nCores = nCores,
                       level = level, what = estimatename, new.coef = new.coef)
         est <- switch(interval, none = unlist(est), confidence = , 
                       prediction = t(simplify2array(est)))
       }
       if (se) 
-        sem <- sapply(tilz, predconfPois2, object = model, N = N, m = m,
+        sem <- sapply(tilz, predconfPois2, object = model, nCores = nCores,
                       level = level, what = "se", new.coef = new.coef)
     }
     else {
       if (!seonly) 
-        est <- predconfPois2(window, model, level, estimatename, N = N, m = m,
+        est <- predconfPois2(window, model, level, estimatename, nCores = nCores,
                             new.coef = new.coef)
       if (se) 
-        sem <- predconfPois2(window, model, level, "se", N = N, m = m,
+        sem <- predconfPois2(window, model, level, "se", nCores = nCores,
                             new.coef = new.coef)
     }
     if (!se) 
@@ -293,7 +293,7 @@ predict.ppm2 <- function (object, N, m, window = NULL, ngrid = NULL, locations =
   else if ((type %in% c("trend", "intensity")) || poisson) {
     zeroes <- numeric(nrow(newdata))
     for (vn in Vnames) newdata[[vn]] <- zeroes
-    z <- lambda <- GLMpredict(glmfit, newdata, coeffs, changecoef = changedcoef) * (N / m)
+    z <- lambda <- GLMpredict(glmfit, newdata, coeffs, changecoef = changedcoef) * nCores
     if (type == "intensity") 
       z <- PoisSaddle(z, fitin(model))
     if (needSE) {
@@ -313,7 +313,7 @@ predict.ppm2 <- function (object, N, m, window = NULL, ngrid = NULL, locations =
         if (ncol(mm) != ncol(vc)) 
           stop("Internal error: column mismatch in SE calculation")
         vv <- quadform(mm, vc)
-        SE <- lambda * sqrt(vv) / sqrt(N / m)
+        SE <- lambda * sqrt(vv) / sqrt(nCores)
       }
       if (se) 
         zse <- SE
@@ -347,8 +347,7 @@ predict.ppm2 <- function (object, N, m, window = NULL, ngrid = NULL, locations =
       newdata[[Vnames]] <- as.vector(Vnew)
     }
     else if (is.null(avail <- colnames(Vnew))) {
-      for (i in seq_along(Vnames)) newdata[[Vnames[i]]] <- Vnew[, 
-                                                                i]
+      for (i in seq_along(Vnames)) newdata[[Vnames[i]]] <- Vnew[, i]
     }
     else {
       if (all(Vnames %in% avail)) {

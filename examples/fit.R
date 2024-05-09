@@ -21,16 +21,13 @@ fit <- function(obj, method, window, type = "trend", nCores = 20) {
       disk <- subset(unmark(obj), indices == i)
       models[[i]] <- ppm(disk ~ polynom(x, y, 3))
     }
-    preds <- Reduce("+", lapply(1:nCores, \(i) predict.ppm2(models[[i]], 
+    preds <- Reduce("+", lapply(1:nCores, \(i) predict.ppm(models[[i]], 
                                                             type = type,
-                                                            window = pred_window,
-                                                            N = obj$n, 
-                                                            m = table(indices)[i]))) / nCores
+                                                            window = pred_window)))
     ints <- Reduce("+", lapply(1:nCores, \(i) predict.ppm2(models[[i]], 
                                                            type = type,
                                                            window = pred_window,
-                                                           N = obj$n, 
-                                                           m = table(indices)[i], 
+                                                           nCores = nCores,
                                                            interval='confidence'))) / nCores
   } else {
     stop("method must either be 'full' or 'divided'.")

@@ -1,10 +1,13 @@
 library(lgcp)
 library(spatstat)
+library(spatstat.geom)
+library(spatstat.utils)
+library(sp)
 
 load("sd_liver.RData")
 load("popshape_liver.RData")
-minimum.contrast(sd, model = "exponential", method = "g",
-                 intens = density(sd), transform = log)
+source("polygons.R")
+#minimum.contrast(sd, model = "exponential", method = "g", intens = density(sd), transform = log)
 chooseCellwidth(sd, cwinit = 300)
 CELLWIDTH <- 300
 EXT <- 2
@@ -34,7 +37,7 @@ INITS <- lgcpInits(etainit = log(c(sqrt(1.5), 275)), betainit = NULL)
 cf <- CovFunction(exponentialCovFct)
 
 mcmc.control <- mcmcpars(
-  mala.length = 50, burnin = 5, retain = 7,
+  mala.length = 500, burnin = 100, retain = 5,
   adaptivescheme = andrieuthomsh(inith = 1, alpha = 0.5, C = 1,
                                  targetacceptance = 0.574))
 
@@ -45,12 +48,12 @@ lg <- lgcpPredictSpatialPlusPars(formula = FORM, sd = sd, Zmat = Zmat,
                                    adaptivescheme = andrieuthomsh(inith = 1, alpha = 0.5, C = 1,
                                                                     targetacceptance = 0.574)),
                                  output.control = setoutput(gridfunction = dump2dir(
-                                   dirname = paste(BASEDR, "/liver/", sep = ""), forceSave = TRUE)),
+                                   dirname = "liver/", forceSave = TRUE)),
                                  ext = EXT)
-
-lg <- lgcpPredictSpatial(sd = sd, cellwidth = CELLWIDTH, spatial.intensity = density.ppp(sd),
-                         mcmc.control = mcmc.control)
-
+saveRDS(lg, file = "liver/lg.RDS")
+lg
+lg$y.mean$zvals
+plot(lg)
 
 
 
