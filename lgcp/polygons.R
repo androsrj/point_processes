@@ -30,7 +30,7 @@ as.SpatialPolygons.tess <- function(x) {
   return(SpatialPolygons(z))
 }
 
-setAs("tess", "SpatialPolygons", function(from) as.SpatialPolygons.tess(from))
+#setAs("tess", "SpatialPolygons", function(from) as.SpatialPolygons.tess(from))
 
 
 as.SpatialPolygons.owin <- function(x) {
