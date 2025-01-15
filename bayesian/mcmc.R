@@ -28,8 +28,8 @@ mcmc(
   W = 10,
 
   path_to_save = "results/",
-  niter = 600,
-  niter_to_save = 200,
+  niter = 2000,
+  niter_to_save = 1000,
   seed = 1,
 
   lambdastar_estimated = TRUE,
@@ -92,7 +92,7 @@ lam_df <- chain__lambdastar %>%
   data.frame() %>% 
   rename(lambdastar = V1) %>% 
   mutate(iteration = row_number()) %>% 
-  filter(iteration > 50)
+  filter(iteration > 500)
 lam_df %>% 
   ggplot(aes(x = iteration, y = lambdastar)) +
   geom_line() +

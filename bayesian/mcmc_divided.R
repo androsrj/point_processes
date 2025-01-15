@@ -37,8 +37,8 @@ for (j in 1:H) {
     W = 10,
     
     path_to_save = "results/",
-    niter = 100,
-    niter_to_save = 50,
+    niter = 2000,
+    niter_to_save = 500,
     seed = 1,
     
     lambdastar_estimated = TRUE,
@@ -102,20 +102,22 @@ chain__intensity_function2[,2,] <- chain__intensity_function2[,2,] / H
 # -----------------------------------------------------------------------------
 # Graphs ----------------------------------------------------------------------
 
-chain__lambdastar2 %>% 
+lam_df_div <- chain__lambdastar2 %>% 
   data.frame() %>% 
   rename(lambdastar = V1) %>% 
   mutate(iteration = row_number()) %>% 
-  filter(iteration > 50) %>% 
+  filter(iteration > 500) 
+lam_df_div %>% 
   ggplot(aes(x = iteration, y = lambdastar)) +
   geom_line() +
   theme_minimal()
 
 
-chain__intensity_function2[ , , 2:dim(chain__intensity_function2)[3]] %>% 
+int_df_div <- chain__intensity_function2[ , , 2:dim(chain__intensity_function2)[3]] %>% 
   apply(c(1, 2), mean) %>% 
   data.frame() %>% 
-  rename(x = X1, y = X2, intesity_function = X3) %>% 
+  rename(x = X1, y = X2, intesity_function = X3) 
+int_df_div %>% 
   ggplot() +
   geom_tile(aes(x = x, y = y, fill = intesity_function)) +
   scale_fill_gradientn(colors = heat.colors(100, rev = TRUE),
@@ -123,3 +125,5 @@ chain__intensity_function2[ , , 2:dim(chain__intensity_function2)[3]] %>%
   geom_point(data = Y %>% data.frame(), aes(x = X1, y = X2), size = 0.5) +
   coord_fixed() +
   theme_minimal()
+
+save(lam_df_div, int_df_div, file = "divided.RData")
