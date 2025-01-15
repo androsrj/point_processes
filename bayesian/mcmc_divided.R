@@ -121,7 +121,7 @@ int_df_div %>%
   ggplot() +
   geom_tile(aes(x = x, y = y, fill = intesity_function)) +
   scale_fill_gradientn(colors = heat.colors(100, rev = TRUE),
-                       limits = c(0, 18)) +
+                       limits = c(0, 13)) +
   geom_point(data = Y %>% data.frame(), aes(x = X1, y = X2), size = 0.5) +
   coord_fixed() +
   theme_minimal()
