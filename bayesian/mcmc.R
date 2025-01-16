@@ -28,8 +28,8 @@ mcmc(
   W = 10,
 
   path_to_save = "results/",
-  niter = 2000,
-  niter_to_save = 1000,
+  niter = 5500,
+  niter_to_save = 500,
   seed = 1,
 
   lambdastar_estimated = TRUE,
@@ -111,5 +111,6 @@ int_df %>%
   geom_point(data = Y %>% data.frame(), aes(x = X1, y = X2), size = 0.5) +
   coord_fixed() +
   theme_minimal()
+ggsave("intensity_full.pdf")
 
 save(int_df, lam_df, file = "full.RData")

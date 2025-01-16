@@ -37,7 +37,7 @@ for (j in 1:H) {
     W = 10,
     
     path_to_save = "results/",
-    niter = 2000,
+    niter = 5500,
     niter_to_save = 500,
     seed = 1,
     
@@ -125,5 +125,6 @@ int_df_div %>%
   geom_point(data = Y %>% data.frame(), aes(x = X1, y = X2), size = 0.5) +
   coord_fixed() +
   theme_minimal()
+ggsave("intensity_divided.pdf")
 
 save(lam_df_div, int_df_div, file = "divided.RData")
