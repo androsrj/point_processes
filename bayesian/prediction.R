@@ -15,6 +15,6 @@ index <- (int_df$x > x.lower * 10 &
             int_df$y > y.lower * 10 & 
             int_df$y < y.upper * 10)
 
-pred.count <- mean(int_df$intesity_function[index]) * vol
+pred.count <- mean(int_df$intensity_function[index]) * vol
 
 cat("True count is ", true.count, " and predicted count is ", round(pred.count, 2), ".\n")

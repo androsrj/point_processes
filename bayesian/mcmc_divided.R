@@ -22,12 +22,12 @@ YFull = cbind(YFull, (8 / 3) * exp( (YFull[, 1]^2) / 30) +
 # -----------------------------------------------------------------------------
 # Running MCMC ----------------------------------------------------------------
 
-H <- 4
-nPer <- nrow(YFull) / H
-chain__lambdastar <- chain__intensity_function <- vector("list", H)
+nCores <- 4
+nPer <- nrow(YFull) / nCores
+chain__lambdastar <- chain__intensity_function <- vector("list", nCores)
 groups <- split(sample(nrow(YFull)), c("A", "B", "C", "D"))
 
-for (j in 1:H) {
+for (j in 1:nCores) {
   
   Y <- YFull[groups[[j]], ]
   
@@ -38,12 +38,12 @@ for (j in 1:H) {
     
     path_to_save = "results/",
     niter = 5500,
-    niter_to_save = 500,
+    niter_to_save = 100,
     seed = 1,
     
     lambdastar_estimated = TRUE,
     lambdastar_init = 3,
-    lambdastar_prior_a =  1,
+    lambdastar_prior_a =  1 / nCores,
     lambdastar_prior_b = 0.1,
     
     link_function = 'probit',
@@ -96,12 +96,13 @@ for (j in 1:H) {
 
 chain__lambdastar2 <- Reduce("+", chain__lambdastar)
 chain__intensity_function2 <- Reduce("+", chain__intensity_function)
-chain__intensity_function2[,1,] <- chain__intensity_function2[,1,] / H
-chain__intensity_function2[,2,] <- chain__intensity_function2[,2,] / H
+chain__intensity_function2[,1,] <- chain__intensity_function2[,1,] / nCores
+chain__intensity_function2[,2,] <- chain__intensity_function2[,2,] / nCores
 
 # -----------------------------------------------------------------------------
 # Graphs ----------------------------------------------------------------------
 
+lam_samples_div <- chain__lambdastar2
 lam_df_div <- chain__lambdastar2 %>% 
   data.frame() %>% 
   rename(lambdastar = V1) %>% 
@@ -112,19 +113,19 @@ lam_df_div %>%
   geom_line() +
   theme_minimal()
 
-
+int_samples_div <- chain__intensity_function2
 int_df_div <- chain__intensity_function2[ , , 2:dim(chain__intensity_function2)[3]] %>% 
   apply(c(1, 2), mean) %>% 
   data.frame() %>% 
-  rename(x = X1, y = X2, intesity_function = X3) 
+  rename(x = X1, y = X2, intensity_function = X3) 
 int_df_div %>% 
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = intesity_function)) +
+  geom_tile(aes(x = x, y = y, fill = intensity_function)) +
   scale_fill_gradientn(colors = heat.colors(100, rev = TRUE),
                        limits = c(0, 13)) +
-  geom_point(data = Y %>% data.frame(), aes(x = X1, y = X2), size = 0.5) +
+  geom_point(data = YFull %>% data.frame(), aes(x = X1, y = X2), size = 0.5) +
   coord_fixed() +
   theme_minimal()
 ggsave("intensity_divided.pdf")
 
-save(lam_df_div, int_df_div, file = "divided.RData")
+save(lam_df_div, lam_samples_div, int_df_div, int_samples_div, file = "divided.RData")

@@ -1,3 +1,4 @@
+
 library(Rcpp)
 library(dplyr)
 library(ggplot2)
@@ -29,7 +30,7 @@ mcmc(
 
   path_to_save = "results/",
   niter = 5500,
-  niter_to_save = 500,
+  niter_to_save = 100,
   seed = 1,
 
   lambdastar_estimated = TRUE,
@@ -88,6 +89,7 @@ saveRDS(object = chain__intensity_function,
 # -----------------------------------------------------------------------------
 # Graphs ----------------------------------------------------------------------
 
+lam_samples <- chain__lambdastar
 lam_df <- chain__lambdastar %>% 
   data.frame() %>% 
   rename(lambdastar = V1) %>% 
@@ -98,14 +100,14 @@ lam_df %>%
   geom_line() +
   theme_minimal()
 
-
+int_samples <- chain__intensity_function
 int_df <- chain__intensity_function[ , , 2:dim(chain__intensity_function)[3]] %>% 
   apply(c(1, 2), mean) %>% 
   data.frame() %>% 
-  rename(x = X1, y = X2, intesity_function = X3) 
+  rename(x = X1, y = X2, intensity_function = X3) 
 int_df %>% 
   ggplot() +
-  geom_tile(aes(x = x, y = y, fill = intesity_function)) +
+  geom_tile(aes(x = x, y = y, fill = intensity_function)) +
   scale_fill_gradientn(colors = heat.colors(100, rev = TRUE),
                        limits = c(0, 13)) +
   geom_point(data = Y %>% data.frame(), aes(x = X1, y = X2), size = 0.5) +
@@ -113,4 +115,4 @@ int_df %>%
   theme_minimal()
 ggsave("intensity_full.pdf")
 
-save(int_df, lam_df, file = "full.RData")
+save(int_df, int_samples, lam_df, lam_samples, file = "full.RData")
